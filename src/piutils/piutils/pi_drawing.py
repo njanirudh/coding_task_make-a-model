@@ -39,6 +39,7 @@ def draw_input(
         output_*:
             Network output relative to the network input.
             Used to crop/scale the drawings.
+            Also see pidata.pi_parser.PiParser.__init__().
         scale_factor:
             Set to scale the drawing.
 
@@ -82,10 +83,10 @@ def color_semantic_labels(
                (batch_size, height, width) or
                (height, width) and
             dtype numpy.int64 with pixel-wise label IDs.
-            See pi_parser_instance_segmentation.PiParserInstanceSegmentation.make_target().
+            See pi_parser.PiParser.__getitem__().
         semantic_labels:
             A nested dictionary of semantic labels with keys 'color' and 'index'.
-            As returned by pi_parser.PiParserBase.semantic_labels.
+            As returned by pidata.pi_parser.PiParser.semantic_labels.
         *:
             See draw_input().
 
@@ -124,9 +125,6 @@ def draw_instances(
     input_tensor: np.ndarray,
     mean: np.ndarray,
     std: np.ndarray,
-    boxes: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]],
-    keypoints: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]],
-    masks: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]],
     labels: np.ndarray,
     semantic_labels: typing.Dict,
     output_width: int,
@@ -135,15 +133,21 @@ def draw_instances(
     output_offset_y: int = 0,
     output_stride_x: int = 1,
     output_stride_y: int = 1,
-    scale_factor: float = 3.0,
+    scale_factor: float = 1.0,
+    boxes: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
+    keypoints: typing.Optional[
+        typing.Union[np.ndarray, typing.List[np.ndarray]]
+    ] = None,
+    masks: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
+    scores: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
     **kwargs,
 ) -> np.ndarray:
     """Make a human-viewable image of the parsed target for an instance segmentation or object detection network.
 
     Args:
-        boxes, keypoints, masks, labels:
-            A np.ndarray or a list of np.ndarrays for batched input.
-            See pi_parser_instance_segmentation.PiParserInstanceSegmentation.make_target().
+        labels, boxes, keypoints, masks, scores:
+            A numpy.ndarray or a list of numpy.ndarrays (for batched input).
+            Also see pidata.pi_parser.PiParser.__getitem__().
         *:
             See draw_input() and colored_semantics().
 
@@ -163,6 +167,15 @@ def draw_instances(
     if isinstance(labels, np.ndarray) and len(labels.shape) == 1:
         labels = [labels]
 
+    if isinstance(scores, np.ndarray) and len(scores.shape) == 1:
+        scores = [scores]
+
+    boxes = None if boxes is None or not len(boxes) else boxes
+    keypoints = None if keypoints is None or not len(keypoints) else keypoints
+    masks = None if masks is None or not len(masks) else masks
+    labels = None if labels is None or not len(labels) else labels
+    scores = None if scores is None or not len(scores) else scores
+
     backgrounds = _make_list_of_input_drawings(
         input_tensor=input_tensor,
         mean=mean,
@@ -179,6 +192,7 @@ def draw_instances(
     batch_size = len(backgrounds)
 
     color_mapping = _make_color_mapping(semantic_labels=semantic_labels)
+    name_mapping = list(semantic_labels.keys())
 
     drawing_width = np.ceil(scale_factor * output_width).astype(np.int).item()
     drawing_height = np.ceil(scale_factor * output_height).astype(np.int).item()
@@ -221,21 +235,16 @@ def draw_instances(
         if masks is not None:
             masks_slice = masks[slice_index]
 
+        if labels is not None:
+            labels_slice = labels[slice_index]
+
+        if scores is not None:
+            scores_slice = scores[slice_index]
+
         drawing = backgrounds[slice_index]
 
-        drawing = drawing[
-            output_offset_y : (output_offset_y + output_height),
-            output_offset_x : (output_offset_x + output_width),
-        ]
-
-        drawing = cv2.resize(
-            drawing,
-            (drawing_width, drawing_height),
-            interpolation=cv2.INTER_LINEAR,
-        )
-
-        if masks is not None:
-            for mask, label in zip(masks_slice, labels[slice_index]):
+        if masks is not None and labels is not None:
+            for mask, label in zip(masks_slice, labels_slice):
                 color = color_mapping[label].reshape(1, 1, 3)
 
                 mask = cv2.resize(
@@ -254,8 +263,8 @@ def draw_instances(
                     drawing,
                 )
 
-        if boxes is not None:
-            for box_int, label in zip(boxes_slice_int, labels[slice_index]):
+        if boxes is not None and labels is not None:
+            for box_int, label in zip(boxes_slice_int, labels_slice):
 
                 color = (
                     color_mapping[label].tolist() if masks is None else (255, 255, 255)
@@ -273,9 +282,9 @@ def draw_instances(
                     thickness=1,
                 )
 
-        if boxes is not None and keypoints is not None:
+        if boxes is not None and keypoints is not None and labels is not None:
             for keypoint_int, box_int, label in zip(
-                keypoints_slice_int, boxes_slice_int, labels[slice_index]
+                keypoints_slice_int, boxes_slice_int, labels_slice
             ):
                 if not keypoint_int[0, 2].item():
                     # not visible
@@ -305,8 +314,8 @@ def draw_instances(
                     color=color,
                 )
 
-        if keypoints is not None:
-            for keypoint_int, label in zip(keypoints_slice_int, labels[slice_index]):
+        if keypoints is not None and labels is not None:
+            for keypoint_int, label in zip(keypoints_slice_int, labels_slice):
                 if not keypoint_int[0, 2].item():
                     # not visible
                     continue
@@ -327,6 +336,24 @@ def draw_instances(
                     thickness=1,
                 )
 
+        if boxes is not None and scores is not None and labels is not None:
+            for box_int, score, label in zip(
+                boxes_slice_int, scores_slice, labels_slice
+            ):
+                semantic_label_name = name_mapping[label]
+                color = (
+                    color_mapping[label].tolist() if masks is None else (255, 255, 255)
+                )
+                drawing = cv2.putText(
+                    drawing,
+                    f"{semantic_label_name.split('.')[-1]}: {score:.3f}",
+                    (box_int[0], box_int[1] - 5),
+                    color=color,
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale=0.5,
+                    lineType=cv2.LINE_AA,
+                )
+
         drawings.append(drawing)
 
     return np.concatenate(drawings, axis=1)
@@ -344,6 +371,7 @@ def _make_list_of_input_drawings(
     output_stride_y: int,
     scale_factor: float,
 ) -> typing.List[np.ndarray]:
+
     if len(input_tensor.shape) == 3:
         batch_size = 1
         input_tensor = input_tensor[np.newaxis]
@@ -376,7 +404,7 @@ def _make_list_of_input_drawings(
                 output_offset_x : (output_offset_x + output_width),
             ],
             (drawing_width, drawing_height),
-            interpolation=cv2.INTER_LINEAR,
+            interpolation=cv2.INTER_NEAREST,
         )
         for drawing in drawings
     ]
