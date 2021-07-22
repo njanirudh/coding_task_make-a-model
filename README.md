@@ -28,9 +28,7 @@ The dataset contains plants of different growing stages. Sometimes the plants ar
 
 We do not provide any train, validation, or test splits of the dataset. It's up to you to deal with the data and how you prefer to set up partitions or other modifications to building a model for the task.
 
-Here's the download link:
-
-[TODO](TODO)
+Here's the download [Link](https://hidrive.ionos.com/share/n1hw5mfoew)
 
 Important note: The dataset is given to you for the purpose of this challenge only. All rights belong to Pheno-Inspect. You are not allowed to use it once the challenge is completed. You are also not allowed to publish the dataset or parts of it. To avoid any issues, we recommend deleting the dataset after the application process.
 
@@ -67,7 +65,9 @@ The code within this repository is licensed under MIT. So in case you decide aga
 
 We suggest you start by creating a fork of this repository, then have a look at the [parser example](examples/parser.py). Depending on your bandwidth, you may want to start downloading the dataset  (~1 GB) before.
 
-### Submission
+### Submission and Deadline
+
+After you have recieved the Material, you'll have 14 Days for completion and submission.
 
 Please create a ZIP file of the repository you working and upload it to HIDRIVE (you should have received a link from us). Then send a note to philipp.lottes@phenoinspect and jan.quakernack@phenoinspect.de to your repository. The repository should contain a README with instructions how to set up and use your software. Larger files (e.g. network weights) you want to share can also be uploaded to HIDRIVE (you should have received a link from us). In that case, please also put a Link in the README.
 
