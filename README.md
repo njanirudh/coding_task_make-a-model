@@ -32,6 +32,8 @@ Here's the download link:
 
 [TODO](TODO)
 
+Important note: The dataset is given to you for the purpose of this challenge only. All rights belong to Pheno-Inspect. You are not allowed to use it once the challenge is completed. You are also not allowed to publish the dataset or parts of it. To avoid any issues, we recommend deleting the dataset after the application process.
+
 Here's another impression of the variety of the data:
 
 ![crop-weed dataset](./pics/sugarbeet_weed_dataset.jpg)
@@ -59,7 +61,7 @@ export PYTHONPATH="${PYTHONPATH}:${PI_SRC_PATH}/piutils"
 export PYTHONPATH="${PYTHONPATH}:${PI_SRC_PATH}/pidata"
 ```
 
-The code within this repository is licensed under MIT. So in case you decide against us, you can still take everything written for this challenge and put it to use somewhere else :)
+The code within this repository is licensed under MIT. So in case you decide against us, you can still take everything you wrote for this challenge and put it to use somewhere else. Please note that this does not hold for the provided dataset, which is given to you for the purpose of this challenge only.
 
 ### Getting Started
 
