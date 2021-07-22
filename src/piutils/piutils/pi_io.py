@@ -11,13 +11,22 @@ import json
 
 import cv2
 import numpy as np
+import yaml
 
 
 def read_json(path: typing.Union[pathlib.Path, str]) -> typing.Dict:
     with pathlib.Path(path).open("r") as json_file:
-        data = json.load(json_file)
+        return json.load(json_file)
 
-    return data
+
+def read_yaml(path: typing.Union[pathlib.Path, str]) -> typing.Dict:
+    with pathlib.Path(path).open("r") as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
+def write_yaml(data: typing.Dict, path: typing.Union[pathlib.Path, str]):
+    with pathlib.Path(path).open("w+") as yaml_file:
+        yaml.safe_dump(data, yaml_file)
 
 
 def read_image(

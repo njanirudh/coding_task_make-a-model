@@ -9,7 +9,6 @@ import pathlib
 
 import numpy as np
 import cv2
-import torch
 
 from piutils import pi_log
 
@@ -19,15 +18,158 @@ from . import pi_transform
 logger = pi_log.get_logger(__name__)
 
 
-class PiParserBase(torch.utils.data.Dataset):
-    """Base class for our dataset parsers."""
+class PiParser:
+    """A dataset parser for a instance segmentation, object detcetion or semantic segmentation network.
 
-    def __init__(self, config: typing.Dict, split_name: str):
-        if split_name not in {"train", "val", "test"}:
-            raise ValueError("Invalid split name: '{split_name}'")
+    Implements __len__ and __getitem__ as the PyTorch's map-style dataset class
+    (but has no PyTorch dependencies).
 
+    As we frequently deal with images larger that GPU memory, the parser works
+    by sampling subregions from images in a custom dataset format.
+
+    The sampling behaviour is reproducable. For a given item index n and parser config,
+    __getitem__(n) will always sample the same region and
+    apply the same data augmentation (if specified in the config).
+
+    Usage:
+        parser = PiParser(
+            config={...}, split_name="train", numpy_to_tensor_func=torch.from_numpy
+        )
+
+        for input_image, target_dict in parser:
+            instance_class_labels = target_dict["labels"]  # shape (num_instances,)
+            instance_masks = target_dict["masks"]  # shape (num_instances, target_height, target_width)
+            instance_bounding_boxes = target_dict["boxes"]  # shape (num_instances, 4)
+
+    For a complete usage example, see examples/parser.py.
+    """
+
+    def __init__(
+        self,
+        split_name: str,
+        num_samples: int,
+        config: typing.Dict,
+        numpy_to_tensor_func: typing.Optional[
+            typing.Callable[[np.ndarray], typing.Any]
+        ] = None,
+    ):
+        """
+        Args:
+            split_name:
+                Name of the dataset split to be parsed (same as used in config).
+                Allows different settings for each split withing the same config file.
+                Typical options 'train', 'val' and 'test'.
+
+            num_samples:
+                Number of random image subregions to be sampled. Set to a multiple of the batch size.
+
+            config:
+                A nested dictionary that defines from where and how the data is parsed.
+
+                Important configuration parameters are:
+
+                'datasets', {split_name}:
+                    A list of datasets to draw samples from. Each item is a dictionary
+                    with keys:
+                        'path':
+                            Where to find the dataset on disk.
+                        'sampling_weight':
+                            Proportional to the frequency samples are drawn from this dataset.
+                            Not relevant if there is only a single dataset in the list.
+
+                'input_layers':
+                    A list of input layers (should be present in all parsed datasets).
+                    Each item in a dictionary with keys:
+                        'name':
+                            E.g. 'rgb'.
+                        'channels':
+                            The number of channels, e.g. 3.
+                        'mean' and 'std':
+                            Two arrays of floats used for input normalization, i.e.,
+                            input_normalized = (input - mean) / std.
+                            Size should be equal to 'channels'.
+
+                'instance_filter':
+                    A dictonary with keys 'min_box_area', 'min_mask_area'.
+                    Instances with a bounding box or a mask smaller than these
+                    values are filtered out.
+
+                'model_input':
+                    The input size of the network.
+                    A dictionary with keys 'height' and 'width'.
+
+                'model_output':
+                    The output size of the network.
+                    A dictionary with keys 'height', 'width', 'offset_x', 'offset_y', 'stride_x', 'stride_y'.
+
+                    Height and width are given with respect to the model input, i.e.,
+                    if input_image (a numpy.ndarray) is the network input,
+                    the subregion that overlaps the network output 1:1 is:
+
+                        image[
+                            output_offset_y : output_offset_y + output_height : output_stride_y,
+                            output_offset_x : output_offset_x + output_width : output_stride_x,
+                        ]
+
+                    The spatial dimensions of the return target tensors are:
+
+                        target_height = height // stride_y
+                        target_width = width // stride_x
+
+                'required_targets':
+                    A dictionary with keys
+                        'area',
+                        'boxes',
+                        'iscrowd',
+                        'keypoints',
+                        'labels',
+                        'masks',
+                        'semantics',
+                    and boolean values.
+                    Determines which outputs the parser should provide, also see __getitem__.
+
+                'samplers', {split_name}:
+                    A list of sampling strategies. The 'weight' parameter determines the frequence
+                    the strategy in question is used. There are two sampling strategies:
+                        'uniform':
+                            Samples a patch anyhwhere within the image.
+                        'instances':
+                            Samples a patch from image regions with plant instances
+                            the frequence of each class is determined by the 'sampling_weight',
+                            see 'semantic_labels'.
+                    See examples/parser.py for details.
+
+                'seed', {split_name}:
+                    Used to initialize the random state and have reproducable sampling behaviour.
+
+                'semantic_labels':
+                    A list of semantic class labels contained in the parsed dataset (and learned by the model).
+                    Each item is a dictionary with keys:
+                        'name':
+                            Name of the semantic class.
+                        'color':
+                            Used for visualization.
+                        'has_instances'
+                            A boolean. True if this is a class that sould be considered to have instances.
+                        'join_with':
+                            A list of other labels present in the dataset to be remapped to this class.
+                        'sampling_weight':
+                            Used by the 'instances' sampler. Roughly proportional to the frequency
+                            representatives of this class are contained in the parsed images.
+
+                'transforms', {split_name}:
+                    A list of random transforms applied to each split of the dataset for data augmentation.
+
+            numpy_to_tensor_func:
+                A framework-dependent conversion function to make a tensor out of a numpy.ndarray.
+                If None, no conversion is performed and returned type is numpy.ndarray.
+                Options might be
+                   torch.from_numpy (PyTorch) and
+                   tf.convert_to_tensor (Tensorflow).
+        """
         self._config = config
         self._split_name = split_name
+        self._numpy_to_tensor_func = numpy_to_tensor_func
 
         self._input_width = self._config["model_input"]["width"]
         self._input_height = self._config["model_input"]["height"]
@@ -39,7 +181,7 @@ class PiParserBase(torch.utils.data.Dataset):
         self._output_stride_x = self._config["model_output"]["stride_x"]
         self._output_stride_y = self._config["model_output"]["stride_y"]
 
-        self._size = self._config["size"][self._split_name]
+        self._size = num_samples
         seed = self._config["seed"][self._split_name]
 
         random = np.random.RandomState(seed)
@@ -408,8 +550,6 @@ class PiParserBase(torch.utils.data.Dataset):
             logger.info(f"    * Name: {input_layer_data['name']}")
             logger.info(f"    * Channels: {input_layer_data['channels']}")
 
-        logger.info(f"Parser initializaton done (split '{self._split_name}').")
-
     @property
     def config(self) -> typing.Dict:
         return self._config
@@ -454,7 +594,7 @@ class PiParserBase(torch.utils.data.Dataset):
     def output_stride_y(self) -> int:
         return self._output_stride_y
 
-    def sample(self, random: np.random.RandomState) -> typing.Dict[str, torch.Tensor]:
+    def _sample(self, random: np.random.RandomState) -> typing.Dict[str, np.ndarray]:
         dataset = random.choice(
             self._datasets, p=self._datasets_sampling_weights, replace=False
         )
@@ -618,26 +758,218 @@ class PiParserBase(torch.utils.data.Dataset):
             ) : self._output_stride_x,
         ]
 
-        target = self.make_target(
+        target = self._make_target(
             imap=imap,
             annotations=annotations,
             geometry_transforms=self._geometry_transforms,
         )
 
-        return input_raster, target
+        return self._numpy_to_tensor(input_raster), target
 
-    def make_target(
+    def _make_target(
         self,
         imap: np.ndarray,
         annotations: typing.Dict,
         geometry_transforms: typing.List[pidata.pi_transform.PiRandomTransform],
-    ) -> typing.Dict[str, np.ndarray]:
-        """Parses annotations from dataset as required by task or model.
+    ) -> typing.Dict[str, typing.Union[np.ndarray, typing.Any]]:
+        imap_ids = np.unique(imap)
 
-        To be implemented by derived classes.
+        target_height = self._output_height // self._output_stride_y
+        target_width = self._output_width // self._output_stride_x
+
+        if self._config["required_targets"]["semantics"]:
+            semantics = np.zeros(
+                (target_height, target_width),
+                dtype=np.int64,
+            )
+
+        # per-instance annotations
+
+        if self._config["required_targets"]["boxes"]:
+            boxes = []
+
+        if self._config["required_targets"]["labels"]:
+            labels = []
+
+        if self._config["required_targets"]["area"]:
+            area = []
+
+        if self._config["required_targets"]["iscrowd"]:
+            iscrowd = []
+
+        if self._config["required_targets"]["masks"]:
+            masks = []
+
+        if self._config["required_targets"]["keypoints"]:
+            keypoints = []
+
+        max_x = np.floor(self._output_width / self._output_stride_x)
+        max_y = np.floor(self._output_width / self._output_stride_y)
+
+        for annotation_object_id, annotation_object in annotations.items():
+            if (
+                annotation_object["type"] in ["segment", "instance"]
+                and "imapIds" in annotation_object
+                and any(
+                    (
+                        annotation_imap_id in imap_ids
+                        for annotation_imap_id in annotation_object["imapIds"]
+                    )
+                )
+            ):
+                annotation_mask = np.isin(imap, annotation_object["imapIds"])
+
+                semantic_label_name = annotation_object["semanticLabelName"]
+
+                if semantic_label_name not in self.semantic_labels:
+                    logger.warning(f"Ignore unknown label: {semantic_label_name}")
+                    continue
+
+                if not self.semantic_labels[semantic_label_name]["has_instances"]:
+                    continue
+
+                semantic_label_index = self.semantic_labels[semantic_label_name][
+                    "index"
+                ]
+
+                if self._config["required_targets"]["semantics"]:
+                    semantics[annotation_mask] = semantic_label_index
+
+                if annotation_object["type"] in ["instance"]:
+                    annotation_mask_uint8 = annotation_mask.astype(np.uint8)
+
+                    box_x, box_y, box_width, box_height = cv2.boundingRect(
+                        annotation_mask_uint8.astype(np.uint8)
+                    )
+
+                    box_x0 = np.clip(box_x, 0.0, max_x)
+                    box_x1 = np.clip(box_x + box_width, 0.0, max_x)
+                    box_y0 = np.clip(box_y, 0.0, max_y)
+                    box_y1 = np.clip(box_y + box_height, 0.0, max_y)
+
+                    box = np.asarray([box_x0, box_y0, box_x1, box_y1])
+
+                    box_area = (box[2] - box[0]) * (box[3] - box[1])
+
+                    if (
+                        "instance_filter" in self.config
+                        and box_area < self.config["instance_filter"]["min_box_area"]
+                    ):
+                        continue
+
+                    if "instance_filter" in self.config and (
+                        annotation_mask.sum()
+                        < self.config["instance_filter"]["min_mask_area"]
+                    ):
+                        continue
+
+                    if self._config["required_targets"]["boxes"]:
+                        boxes.append(box)
+
+                    if self._config["required_targets"]["area"]:
+                        area.append(box_area)
+
+                    if self._config["required_targets"]["labels"]:
+                        labels.append(semantic_label_index)
+
+                    if self._config["required_targets"]["iscrowd"]:
+                        iscrowd.append(0)
+
+                    if self._config["required_targets"]["masks"]:
+                        masks.append(annotation_mask_uint8)
+
+                    if self._config["required_targets"]["keypoints"]:
+                        if (
+                            "keypoints" in annotation_object
+                            and annotation_object["keypoints"]
+                        ):
+                            keypoint_position = (
+                                np.asarray(
+                                    annotation_object["keypoints"][0]["coordinates"],
+                                    dtype=np.float32,
+                                )
+                                - np.asarray(
+                                    [self._output_offset_x, self._output_offset_y],
+                                    dtype=np.float32,
+                                )
+                            ) / np.asarray(
+                                [self._output_stride_x, self._output_stride_y],
+                                dtype=np.float32,
+                            )
+
+                            keypoint_is_visible = (
+                                keypoint_position[0] >= 0
+                                and keypoint_position[0] < self._output_width
+                                and keypoint_position[1] >= 0.0
+                                and keypoint_position[1] < self._output_height
+                            )
+                        else:
+                            keypoint_is_visible = False
+
+                        if keypoint_is_visible:
+                            keypoints.append(
+                                np.asarray(
+                                    [[keypoint_position[0], keypoint_position[1], 1.0]],
+                                    dtype=np.float32,
+                                )
+                            )
+                        else:
+                            keypoints.append(
+                                np.asarray([[0.0, 0.0, 0.0]], dtype=np.float32)
+                            )
+
+        target = {}
+
+        if self._config["required_targets"]["semantics"]:
+            semantics[imap == pi_dataset.IMAP_IGNORE] = len(self.semantic_labels)
+            target["semantics"] = self._numpy_to_tensor(semantics)
+
+        if self._config["required_targets"]["boxes"]:
+            target["boxes"] = self._numpy_to_tensor(
+                np.asarray(boxes, dtype=np.float32).reshape(-1, 4)
+            )
+
+        if self._config["required_targets"]["labels"]:
+            target["labels"] = self._numpy_to_tensor(
+                np.asarray(labels, dtype=np.int64).reshape(-1)
+            )
+
+        if self._config["required_targets"]["area"]:
+            target["area"] = self._numpy_to_tensor(
+                np.asarray(area, dtype=np.float32).reshape(-1)
+            )
+
+        if self._config["required_targets"]["iscrowd"]:
+            target["iscrowd"] = self._numpy_to_tensor(
+                np.asarray(iscrowd, dtype=np.uint8).reshape(-1)
+            )
+
+        if self._config["required_targets"]["masks"]:
+            target["masks"] = self._numpy_to_tensor(
+                np.asarray(masks, dtype=np.uint8).reshape(
+                    -1, target_height, target_width
+                )
+            )
+
+        if self._config["required_targets"]["keypoints"]:
+            target["keypoints"] = self._numpy_to_tensor(
+                np.asarray(keypoints, dtype=np.float32).reshape(-1, 1, 3)
+            )
+
+        return target
+
+    def get_height_and_width(self) -> typing.Tuple[int, int]:
         """
+        Returns:
+            A tuple (height, width). The size of the parsed input images.
+        """
+        return self._input_height, self._input_width
 
     def __len__(self) -> int:
+        """
+        Returns:
+            The total number of samples that cam be drawn.
+        """
         return self._size
 
     def __getitem__(
@@ -645,18 +977,74 @@ class PiParserBase(torch.utils.data.Dataset):
     ) -> typing.Tuple[np.ndarray, typing.Dict[str, np.ndarray]]:
         """
         Returns:
-            A tuple of
-                input raster,
-                    a numpy.ndarray of dtype numpy.float32, and
-                target,
-                    a dictionary of numpy.ndarray depending on the
-                    implementation of make_target().
+            A tuple of an input image and target (a dictionary).
+
+            The tensor data type depends on the numpy_to_tensor_func
+            given in the constructor and is numpy.ndarray by default.
+
+            The target is a dictionary with keys as indicated
+            in 'required_targets' in the config passed to the parser.
+
+            Options are:
+                'semantics':
+                    A tensor of shape (height, width), dtype int64
+                    with semantic label IDs. IDs start from 0 and range to
+                    {number of semantic labels} as given in the config dictionary
+                    passed to the parser.
+
+                    ID 0 marks Soil/Background pixels.
+
+                    The highest ID == <number of semantic classes> marks pixels
+                    to be ignored (if applicable for the model):
+
+                        0 -> first semantic label in config (should be Soil/Background),
+                        1 -> second semantic label in config,
+                        2 -> third semantic label in config,
+                        ...
+                        {number of semantic classes} -> pixels to be ignored
+
+                'boxes':
+                    A tensor of shape (num_instances, 4) and dtype float32.
+                    Bounding box coordinates of each instance in order x0, y0, x1, y1.
+
+                'labels':
+                    A tensor of shape (num_instances,) and dtype int64.
+                    The semantic label ID per instance.
+                    Also see 'semantics'.
+
+                'area':
+                    A tensor of shape (num_instances,) and dtype float32.
+                    The area of each instance's bounding box.
+                    Can be used for evaluation.
+
+                'iscrowd':
+                    A tensor of shape (num_instances,) and dtype uint8.
+                    COCO-like. For now, always 0.
+
+                'masks':
+                    A tensor of shape (num_instances, height, width) and dtype uint8.
+                    The binary mask of each instance.
+
+                'keypoints':
+                    A tensor of shape (num_instances, 1, 3) and dtype uint8.
+                    Stem keypoint positions in x, y, visibility.
+                    If visibility is 0, x and y are also 0.
+
+                'image_id' (always returned):
+                    A tensor of shape (,) and dtype int64.
+                    Equals the index of this sample.
         """
-        input_raster, target = self.sample(
+        input_raster, target = self._sample(
             random=np.random.RandomState(self._seeds[index])
         )
-        target["image_id"] = np.asarray(index, dtype=np.int64)
+        target["image_id"] = self._numpy_to_tensor(np.asarray(index, dtype=np.int64))
         return input_raster, target
+
+    def _numpy_to_tensor(self, numpy_array) -> typing.Union[np.ndarray, typing.Any]:
+        if self._numpy_to_tensor_func is not None:
+            return self._numpy_to_tensor_func(numpy_array)
+        else:
+            return numpy_array
 
     def _query_region_from_map(
         self, dataset_item: CiDatasetItemType, x: int, y: int, width: int, height: int
