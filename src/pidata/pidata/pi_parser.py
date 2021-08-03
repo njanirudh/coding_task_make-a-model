@@ -10,7 +10,7 @@ import pathlib
 import numpy as np
 import cv2
 
-from piutils import pi_log
+from src.piutils.piutils import pi_log
 
 from . import pi_dataset
 from . import pi_transform
@@ -19,7 +19,7 @@ logger = pi_log.get_logger(__name__)
 
 
 class PiParser:
-    """A dataset parser for a instance segmentation, object detcetion or semantic segmentation network.
+    """A dataset parser for a instance segmentation, object detection or semantic segmentation network.
 
     Implements __len__ and __getitem__ as the PyTorch's map-style dataset class
     (but has no PyTorch dependencies).
@@ -1164,3 +1164,5 @@ class PiParser:
         for input_layer_data in self._config["input_layers"]:
             std += input_layer_data["std"]
         return std
+
+

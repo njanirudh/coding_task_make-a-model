@@ -12,8 +12,8 @@ import math
 import numpy as np
 import rtree
 
-from piutils import pi_log
-from piutils import pi_io
+from src.piutils.piutils import pi_log
+from src.piutils.piutils import pi_io
 
 logger = pi_log.get_logger(__name__)
 

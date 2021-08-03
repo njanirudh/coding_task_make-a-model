@@ -11,7 +11,7 @@ import copy
 import numpy as np
 import cv2
 
-from piutils import pi_io
+from src.piutils.piutils import pi_io
 
 from .pi_map import PiMap
 
