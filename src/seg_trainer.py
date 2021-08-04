@@ -5,6 +5,7 @@ import segmentation_models_pytorch as smp
 import torch
 import numpy as np
 from pytorch_lightning.loggers import TensorBoardLogger
+from torch.nn.functional import log_softmax
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 
@@ -12,6 +13,7 @@ logger = TensorBoardLogger("tb_logs", name="my_model")
 
 from utils.checkpoint_utils import PeriodicCheckpoint
 
+from src.model.unet import UNET
 from src.pidata.pidata import pi_parser
 from src.utils.custom_config import custom_parser_config
 
@@ -51,7 +53,7 @@ class SegmentationModule(pl.LightningModule):
             encoder_name="mobilenet_v2",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
             encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
             in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-            classes=3,  # model output channels (number of classes in your dataset)
+            classes=4,  # model output channels (number of classes in your dataset)
         )
         self.model.train(train_mode)
 
@@ -62,6 +64,7 @@ class SegmentationModule(pl.LightningModule):
         # Model checkpoint saving every 500 steps
         self.periodic_chkp = PeriodicCheckpoint(500)
 
+        self.config_data = config_data
         self.loss_fn = CrossEntropyLoss()
         self.batch_size = batch_size
         self.epochs = epochs
@@ -72,28 +75,38 @@ class SegmentationModule(pl.LightningModule):
         return self.model(input)
 
     def training_step(self, batch, batch_idx):
-        print("==>",len(batch))
+        # print("Batch ==>", len(batch))
         inputs, labels = batch
-        # inputs, labels = input_tensor, target_dict['semantics']
-        # self.curr_device = inputs.device
+        # inputs, labels = inputs, labels['semantics']
+        self.curr_device = inputs.device
 
         # print(inputs.shape, labels.shape)
 
         outputs = self.forward(inputs)
-        train_loss = self.loss_fn(outputs, labels)
+        # print("Output -->", outputs.shape)
+        # outputs = torch.argmax(outputs, 1)
+        # print("Outputs -->", outputs.shape)
+        # print(outputs.shape, labels.shape)
+
+        train_loss = self.loss_fn(log_softmax(outputs.float(), 0), labels)
 
         return train_loss
 
     def validation_step(self, batch, batch_idx):
-        print("==>",len(batch))
+        # print("Batch ==>", len(batch[1]))
 
         inputs, labels = batch
-        # inputs, labels = input_tensor, target_dict['semantics']
-        # self.curr_device = inputs.device
+        # inputs, labels = inputs, labels['semantics']
+        self.curr_device = inputs.device
 
         # print(inputs.shape, labels.shape)
 
         outputs = self.forward(inputs)
+        # print("Output -->", outputs.shape)
+        # outputs = torch.argmax(outputs, 1)
+        # print("Output -->", outputs.shape)
+        # print(outputs.shape, labels.shape)
+        # print(np.unique(outputs), np.unique(labels))
         val_loss = self.loss_fn(outputs, labels)
 
         return val_loss
@@ -115,8 +128,8 @@ class SegmentationModule(pl.LightningModule):
                                        batch_size=self.batch_size,
                                        shuffle=True,
                                        num_workers=4,
-
-                                       )
+                                       collate_fn=self.collate_fn
+                                      )
         self.num_train_imgs = len(self.train_loader)
         return self.train_loader
 
@@ -133,7 +146,7 @@ class SegmentationModule(pl.LightningModule):
                                      batch_size=self.batch_size,
                                      shuffle=True,
                                      num_workers=4,
-
+                                     collate_fn=self.collate_fn
                                      )
         self.num_val_imgs = len(self.val_loader)
         return self.val_loader
@@ -146,7 +159,6 @@ class SegmentationModule(pl.LightningModule):
                          self.val_dataloader())
 
     def collate_fn(self, batch):
-        pprint(len(batch))
 
         input_data_list = []
         label_list = []
@@ -157,13 +169,14 @@ class SegmentationModule(pl.LightningModule):
             inputs, labels = input_tensor, target_dict['semantics']
             input_data_list.append(inputs)
             label_list.append(labels)
-        zipped = zip(input_data_list, label_list)
-        print("-->", len(list(zipped)[0]))
-        return torch.from_numpy(np.array(input_data_list)), torch.from_numpy(np.array(label_list))
+        # zipped = zip(input_data_list, label_list)
+        return torch.from_numpy(np.array(input_data_list)), \
+               torch.from_numpy(np.array(label_list))
 
 
 if __name__ == "__main__":
     model_trainer = SegmentationModule(config_data=custom_parser_config,
-                                       batch_size=1,
-                                       epochs=150)
+                                       batch_size=5,
+                                       epochs=150,
+                                       gpu=1)
     model_trainer.train_model()

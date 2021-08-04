@@ -20,7 +20,7 @@ Our goal is not to find the one that gives us the highest performance! We want t
 
 The dataset we provide consists of high-resolution RGB images of plants, more specifically sugar beets and weeds. The images were taken with different drones, in different fields, and at different times.
 
-![crop-weed dataset](./pics/cc_cws.jpg)
+![crop-weed dataset](assets/cc_cws.jpg)
 
 The figure illustrates the data and the way they are annotated. There are two object classes, sugar beets (in green) and the weeds (in red). The soil or other objects implicitly belong to the background class. Each plant in the data is annotated as an instance, i.e., information about bounding box, semantic mask, stem key point (mostly center of mass of semantic mask), and semantic label (sugarbeet or weed). 
 
@@ -34,7 +34,7 @@ Important note: The dataset is given to you for the purpose of this challenge on
 
 Here's another impression of the variety of the data:
 
-![crop-weed dataset](./pics/sugarbeet_weed_dataset.jpg)
+![crop-weed dataset](assets/sugarbeet_weed_dataset.jpg)
 
 #### Data Parser
 

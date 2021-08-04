@@ -1,6 +1,7 @@
 # User
 dataset/
 src/lightning_logs
+assets/
 .idea/
 
 # Byte-compiled / optimized / DLL files
