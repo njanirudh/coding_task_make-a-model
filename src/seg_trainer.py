@@ -1,19 +1,17 @@
-from pprint import pprint
-
+import numpy as np
 import pytorch_lightning as pl
 import segmentation_models_pytorch as smp
 import torch
-import numpy as np
 from pytorch_lightning.loggers import TensorBoardLogger
-from torch.nn.functional import log_softmax
 from torch.nn import CrossEntropyLoss
+from torch.nn.functional import log_softmax
 from torch.utils.data import DataLoader
 
 logger = TensorBoardLogger("tb_logs", name="my_model")
 
+from src.model.unet import UNET
 from utils.checkpoint_utils import PeriodicCheckpoint
 
-from src.model.unet import UNET
 from src.pidata.pidata import pi_parser
 from src.utils.custom_config import custom_parser_config
 
@@ -45,16 +43,16 @@ class SegmentationModule(pl.LightningModule):
         super(SegmentationModule, self).__init__()
 
         # Testing custom model
-        # self.model = UNET(3, 3)
+        self.model = UNET(3, 4)
         # self.model.train(train_mode)  # Set training mode = true
 
         # Model from 'segmentation_models_pytorch' library
-        self.model = smp.Unet(
-            encoder_name="mobilenet_v2",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-            encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
-            in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-            classes=4,  # model output channels (number of classes in your dataset)
-        )
+        # self.model = smp.Unet(
+        #     encoder_name="mobilenet_v2",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        #     encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
+        #     in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+        #     classes=4,  # model output channels (number of classes in your dataset)
+        # )
         self.model.train(train_mode)
 
         self.val_loader, self.train_loader = None, None
@@ -88,7 +86,7 @@ class SegmentationModule(pl.LightningModule):
         # print("Outputs -->", outputs.shape)
         # print(outputs.shape, labels.shape)
 
-        train_loss = self.loss_fn(log_softmax(outputs.float(), 0), labels)
+        train_loss = self.loss_fn(outputs, labels)
 
         return train_loss
 
@@ -176,6 +174,7 @@ class SegmentationModule(pl.LightningModule):
 
 if __name__ == "__main__":
     model_trainer = SegmentationModule(config_data=custom_parser_config,
+                                       train_mode=True,
                                        batch_size=5,
                                        epochs=150,
                                        gpu=1)

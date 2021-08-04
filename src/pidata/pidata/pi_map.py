@@ -4,16 +4,16 @@
 
 from __future__ import annotations
 
-import typing
-import pathlib
 import itertools
 import math
+import pathlib
+import typing
 
 import numpy as np
 import rtree
 
-from src.piutils.piutils import pi_log
 from src.piutils.piutils import pi_io
+from src.piutils.piutils import pi_log
 
 logger = pi_log.get_logger(__name__)
 

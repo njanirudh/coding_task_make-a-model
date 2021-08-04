@@ -4,15 +4,13 @@
 
 from __future__ import annotations
 
-import typing
-import pathlib
 import copy
+import pathlib
+import typing
 
 import numpy as np
-import cv2
 
 from src.piutils.piutils import pi_io
-
 from .pi_map import PiMap
 
 IMAP_BACKGORUND = 0

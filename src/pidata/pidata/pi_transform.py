@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import typing
 
-import numpy as np
 import cv2
+import numpy as np
 
 
 class PiRandomTransform:

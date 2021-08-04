@@ -5,9 +5,9 @@
 """
 from __future__ import annotations
 
-import typing
-import pathlib
 import json
+import pathlib
+import typing
 
 import cv2
 import numpy as np

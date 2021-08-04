@@ -1,8 +1,3 @@
-from src.piutils.piutils import pi_log
-from src.piutils.piutils import pi_io
-from src.piutils.piutils import pi_drawing
-from src.pidata.pidata import pi_parser
-
 custom_parser_config = {
         "datasets": {
             "train": [
