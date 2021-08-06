@@ -102,15 +102,7 @@ class SegmentationModule(pl.LightningModule):
         print("Batch ==>",batch_idx, len(batch))
 
         inputs, labels = batch
-        # self.curr_device = inputs.device
 
-        # print(inputs.shape, labels.shape)
-        # outputs = self.forward(inputs)
-        # print("---> Outputs :", len(outputs), len(labels))
-        # print("---> Outputs :", type(outputs), type(labels))
-        #
-        # val_loss = self.loss_fn(torch.from_numpy(np.array(outputs, dtype=np.float32)),
-        #                         torch.from_numpy(np.array(labels, dtype=np.float32)))
         loss_dict = self.model(inputs, labels)
         print("Training Loss :: ", len(loss_dict))
         losses = sum(loss for loss in loss_dict.values())
@@ -121,18 +113,9 @@ class SegmentationModule(pl.LightningModule):
         print("Batch ==>",batch_idx, len(batch))
 
         inputs, labels = batch
-        # self.curr_device = inputs.device
 
-        # print(inputs.shape, labels.shape)
-        # outputs = self.forward(inputs)
-        # print("---> Outputs :", len(outputs), len(labels))
-        # print("---> Outputs :", type(outputs), type(labels))
-        #
-        # val_loss = self.loss_fn(torch.from_numpy(np.array(outputs, dtype=np.float32)),
-        #                         torch.from_numpy(np.array(labels, dtype=np.float32)))
         loss_dict = self.model(inputs, labels)
         print("Loss :: ", len(loss_dict))
-        # losses = sum(loss for loss in loss_dict.values())
 
         return loss_dict
 
@@ -144,7 +127,7 @@ class SegmentationModule(pl.LightningModule):
         training_data_parser = pi_parser.PiParser(
             config=custom_parser_config,
             split_name="train",
-            num_samples=4,  # number of samples to be drawn, set to a multiple of the batch size
+            num_samples=6,  # number of samples to be drawn, set to a multiple of the batch size
             numpy_to_tensor_func=torch.from_numpy,
             # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
         )
@@ -162,7 +145,7 @@ class SegmentationModule(pl.LightningModule):
         val_data_parser = pi_parser.PiParser(
             config=custom_parser_config,
             split_name="train",
-            num_samples=4,  # number of samples to be drawn, set to a multiple of the batch size
+            num_samples=6,  # number of samples to be drawn, set to a multiple of the batch size
             numpy_to_tensor_func=torch.from_numpy,
             # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
         )
@@ -195,27 +178,11 @@ class SegmentationModule(pl.LightningModule):
         print("Targets ->", len(target_list), type(target_list))
         return image_list, target_list
 
-    # def collate_fn(self, batch):
-    #     input_data_list = []
-    #     label_list = []
-    #     for item in batch:
-    #         images, targets = item
-    #         # print(type(images), type(targets))
-    #         # print(len(images), len(targets))
-    #         inputs, targets = images, targets['semantics']
-    #         input_data_list.append(inputs)
-    #         label_list.append(targets)
-    #         # input_data_list = list(image for image in images)
-    #         # label_list = [{k: v for k, v in t.items()} for t in dict(targets)]
-    #
-    #     return torch.from_numpy(np.array(input_data_list)), \
-    #            torch.from_numpy(np.array(label_list))
-
 
 if __name__ == "__main__":
     model_trainer = SegmentationModule(config_data=custom_parser_config,
                                        train_mode=True,
-                                       batch_size=2,
+                                       batch_size=3,
                                        epochs=150,
                                        gpu=1)
     model_trainer.train_model()
