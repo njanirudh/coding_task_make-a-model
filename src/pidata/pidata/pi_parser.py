@@ -1118,7 +1118,7 @@ class PiParser:
                     logger.error(
                         f"Unexpected semantic label '{semantic_label_name}' "
                         f"in dataset item '{dataset_item.name}' "
-                        f"in dataset '{dataset_item.dataset.name}' ({dataset_item.path})."
+                        f"in dataset '{dataset_item.train_data_parser.name}' ({dataset_item.path})."
                     )
                     annotation_object_data["semanticLabelName"] = next(
                         iter(self._semantic_labels_mapping.keys())

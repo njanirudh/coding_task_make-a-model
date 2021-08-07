@@ -7,7 +7,8 @@ custom_parser_config = {
                     "sampling_weight": 1.0,
                 }
             ],
-            "val": [{"path": "TODO/sugarbeet_weed_dataset",
+            "val": [{"path": "/home/anirudh/NJ/Interview/Pheno-Inspect/"
+                            "coding_task_make-a-model/dataset/sugarbeet_weed_dataset",
                      "sampling_weight": 1.0}],
             "test": [{"path": "TODO/sugarbeet_weed_dataset",
                       "sampling_weight": 1.0}],

@@ -197,7 +197,8 @@ if __name__ == "__main__":
     )
 
     for sample_index, (input_tensor, target_dict) in enumerate(train_data_parser):
-
+        if sample_index != 15:
+            continue
         logger.info(f"Sample {sample_index+1}/{len(train_data_parser)}.")
         logger.info(f"    Input shape: {input_tensor.shape}")
         logger.info(f"    Sampled image IDs: {target_dict['image_id']}")

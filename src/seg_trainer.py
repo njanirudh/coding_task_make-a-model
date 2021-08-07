@@ -7,6 +7,10 @@ from torch.nn import CrossEntropyLoss
 from torch.nn.functional import log_softmax
 from torch.utils.data import DataLoader
 
+import torchvision
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+
 logger = TensorBoardLogger("tb_logs", name="my_model")
 
 from src.model.unet import UNET
@@ -21,6 +25,26 @@ torch.manual_seed(seed)
 
 Tensor = torch.tensor
 Module = torch.nn.Module
+
+
+def get_model_instance_segmentation(num_classes):
+    # load an instance segmentation model pre-trained pre-trained on COCO
+    model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
+
+    # get number of input features for the classifier
+    in_features = model.roi_heads.box_predictor.cls_score.in_features
+    # replace the pre-trained head with a new one
+    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+
+    # now get the number of input features for the mask classifier
+    in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
+    hidden_layer = 256
+    # and replace the mask predictor with a new one
+    model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
+                                                       hidden_layer,
+                                                       num_classes)
+
+    return model
 
 
 class SegmentationModule(pl.LightningModule):
@@ -43,8 +67,9 @@ class SegmentationModule(pl.LightningModule):
         super(SegmentationModule, self).__init__()
 
         # Testing custom model
-        self.model = UNET(3, 4)
-        # self.model.train(train_mode)  # Set training mode = true
+        # self.model = UNET(3, 4)
+
+        self.model = get_model_instance_segmentation(4)
 
         # Model from 'segmentation_models_pytorch' library
         # self.model = smp.Unet(
@@ -53,6 +78,7 @@ class SegmentationModule(pl.LightningModule):
         #     in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         #     classes=4,  # model output channels (number of classes in your dataset)
         # )
+
         self.model.train(train_mode)
 
         self.val_loader, self.train_loader = None, None
@@ -66,6 +92,7 @@ class SegmentationModule(pl.LightningModule):
         self.loss_fn = CrossEntropyLoss()
         self.batch_size = batch_size
         self.epochs = epochs
+        self.samples = 4
         self.learning_rate = lr
         self.gpu = gpu
 
@@ -73,41 +100,25 @@ class SegmentationModule(pl.LightningModule):
         return self.model(input)
 
     def training_step(self, batch, batch_idx):
-        # print("Batch ==>", len(batch))
+        print("Batch ==>",batch_idx, len(batch))
+
         inputs, labels = batch
-        # inputs, labels = inputs, labels['semantics']
-        self.curr_device = inputs.device
 
-        # print(inputs.shape, labels.shape)
+        loss_dict = self.model(inputs, labels)
+        print("Training Loss :: ", len(loss_dict))
+        losses = sum(loss for loss in loss_dict.values())
 
-        outputs = self.forward(inputs)
-        # print("Output -->", outputs.shape)
-        # outputs = torch.argmax(outputs, 1)
-        # print("Outputs -->", outputs.shape)
-        # print(outputs.shape, labels.shape)
-
-        train_loss = self.loss_fn(outputs, labels)
-
-        return train_loss
+        return losses
 
     def validation_step(self, batch, batch_idx):
-        # print("Batch ==>", len(batch[1]))
+        print("Batch ==>",batch_idx, len(batch))
 
         inputs, labels = batch
-        # inputs, labels = inputs, labels['semantics']
-        self.curr_device = inputs.device
 
-        # print(inputs.shape, labels.shape)
+        loss_dict = self.model(inputs, labels)
+        print("Loss :: ", len(loss_dict))
 
-        outputs = self.forward(inputs)
-        # print("Output -->", outputs.shape)
-        # outputs = torch.argmax(outputs, 1)
-        # print("Output -->", outputs.shape)
-        # print(outputs.shape, labels.shape)
-        # print(np.unique(outputs), np.unique(labels))
-        val_loss = self.loss_fn(outputs, labels)
-
-        return val_loss
+        return loss_dict
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
@@ -117,8 +128,8 @@ class SegmentationModule(pl.LightningModule):
         training_data_parser = pi_parser.PiParser(
             config=custom_parser_config,
             split_name="train",
-            num_samples=10,  # number of samples to be drawn, set to a multiple of the batch size
-            numpy_to_tensor_func=None,
+            num_samples=self.samples,  # number of samples to be drawn, set to a multiple of the batch size
+            numpy_to_tensor_func=torch.from_numpy,
             # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
         )
 
@@ -135,8 +146,8 @@ class SegmentationModule(pl.LightningModule):
         val_data_parser = pi_parser.PiParser(
             config=custom_parser_config,
             split_name="train",
-            num_samples=10,  # number of samples to be drawn, set to a multiple of the batch size
-            numpy_to_tensor_func=None,
+            num_samples=self.samples,  # number of samples to be drawn, set to a multiple of the batch size
+            numpy_to_tensor_func=torch.from_numpy,
             # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
         )
 
@@ -157,25 +168,23 @@ class SegmentationModule(pl.LightningModule):
                          self.val_dataloader())
 
     def collate_fn(self, batch):
-
-        input_data_list = []
-        label_list = []
+        image_list, target_list = [], []
         for item in batch:
-            input_tensor, target_dict = item
-            # print(type(input_tensor), type(target_dict))
-            # print(len(input_tensor), len(target_dict))
-            inputs, labels = input_tensor, target_dict['semantics']
-            input_data_list.append(inputs)
-            label_list.append(labels)
-        # zipped = zip(input_data_list, label_list)
-        return torch.from_numpy(np.array(input_data_list)), \
-               torch.from_numpy(np.array(label_list))
+            images, targets = item
+
+            image_list.append(images)
+            target_list.append(targets)
+
+        # print("Img ->", len(image_list), type(image_list))
+        # print("Targets ->", len(target_list), type(target_list))
+        return image_list, target_list
 
 
 if __name__ == "__main__":
     model_trainer = SegmentationModule(config_data=custom_parser_config,
                                        train_mode=True,
-                                       batch_size=5,
+                                       lr = 0.01,
+                                       batch_size=2,
                                        epochs=150,
                                        gpu=1)
     model_trainer.train_model()
