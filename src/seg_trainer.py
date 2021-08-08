@@ -1,17 +1,16 @@
+
+import torch
 import numpy as np
 import pytorch_lightning as pl
-import segmentation_models_pytorch as smp
-import torch
-from pytorch_lightning.loggers import TensorBoardLogger
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import log_softmax
 from torch.utils.data import DataLoader
+import segmentation_models_pytorch as smp
+from pytorch_lightning.loggers import TensorBoardLogger
 
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-
-logger = TensorBoardLogger("tb_logs", name="my_model")
 
 from src.model.unet import UNET
 from utils.checkpoint_utils import PeriodicCheckpoint
@@ -27,9 +26,19 @@ Tensor = torch.tensor
 Module = torch.nn.Module
 
 
-def get_model_instance_segmentation(num_classes):
-    # load an instance segmentation model pre-trained pre-trained on COCO
-    model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
+def get_model_instance_segmentation(num_classes: int):
+    """
+    Returns MaskRCNN model
+    Args:
+        num_classes: Total number of classes.
+
+    Returns: Mask-RCNN Model
+    """
+    # load an instance segmentation model pre-trained pre-trained on COCO and Imagenet.
+    model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True,
+                                                               pretrained_backbone=True,
+                                                               trainable_backbone_layers=0,
+                                                               )
 
     # get number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -43,22 +52,21 @@ def get_model_instance_segmentation(num_classes):
     model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
                                                        hidden_layer,
                                                        num_classes)
-
     return model
 
 
 class SegmentationModule(pl.LightningModule):
     """
-    Pytorch Lightning module for training the
-    UNet segmentation model.
+    Pytorch Lightning module for training
+    different segmentation models.
     """
 
     def __init__(self, config_data: dict, train_mode: bool = True,
-                 batch_size: int = 10, gpu: int = 1,
+                 batch_size: int = 5, gpu: int = 1,
                  epochs: int = 50, lr: float = 0.003) -> None:
         """
         :param config_data: Config for data, utils.
-        :param train_mode: Sets model to training or inference mode.
+        :param train_mode: Sets model to training or run_inference mode.
         :param batch_size: Batch size during training.
         :param epochs: Total epochs for training. (default 50)
         :param lr: Learning rate (default 0.003)
@@ -66,12 +74,13 @@ class SegmentationModule(pl.LightningModule):
         """
         super(SegmentationModule, self).__init__()
 
-        # Testing custom model
+        # (1)-> Testing custom model
         # self.model = UNET(3, 4)
 
+        # (2)-> Default Mask-RCNN model
         self.model = get_model_instance_segmentation(4)
 
-        # Model from 'segmentation_models_pytorch' library
+        # (3)-> Model from 'segmentation_models_pytorch' library
         # self.model = smp.Unet(
         #     encoder_name="mobilenet_v2",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
         #     encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
@@ -86,13 +95,14 @@ class SegmentationModule(pl.LightningModule):
         self.trainer, self.curr_device = None, None
 
         # Model checkpoint saving every 500 steps
-        self.periodic_chkp = PeriodicCheckpoint(500)
+        self.periodic_chkp = PeriodicCheckpoint(1000)
+        self.save_hyperparameters()
 
         self.config_data = config_data
         self.loss_fn = CrossEntropyLoss()
         self.batch_size = batch_size
         self.epochs = epochs
-        self.samples = 4
+        self.samples = 1000
         self.learning_rate = lr
         self.gpu = gpu
 
@@ -100,23 +110,23 @@ class SegmentationModule(pl.LightningModule):
         return self.model(input)
 
     def training_step(self, batch, batch_idx):
-        print("Batch ==>",batch_idx, len(batch))
+        print("Batch ==>", batch_idx, len(batch))
 
         inputs, labels = batch
 
         loss_dict = self.model(inputs, labels)
-        print("Training Loss :: ", len(loss_dict))
+        print("Training Loss :: ", len(loss_dict), loss_dict.keys())
         losses = sum(loss for loss in loss_dict.values())
 
         return losses
 
     def validation_step(self, batch, batch_idx):
-        print("Batch ==>",batch_idx, len(batch))
+        print("Batch ==>", batch_idx, len(batch))
 
         inputs, labels = batch
 
         loss_dict = self.model(inputs, labels)
-        print("Loss :: ", len(loss_dict))
+        print("Loss :: ", len(loss_dict), loss_dict.keys())
 
         return loss_dict
 
@@ -161,8 +171,15 @@ class SegmentationModule(pl.LightningModule):
         return self.val_loader
 
     def train_model(self):
-        self.trainer = pl.Trainer(gpus=self.gpu, max_epochs=self.epochs,
-                                  callbacks=self.periodic_chkp)
+        self.trainer = pl.Trainer(gpus=self.gpu,
+                                  max_epochs=self.epochs,
+                                  callbacks=self.periodic_chkp,
+                                  weights_summary="full",
+                                  # overfit_batches=2,
+                                  accumulate_grad_batches=5,
+                                  # check_val_every_n_epoch=10,
+                                  stochastic_weight_avg=True
+                                  )
         self.trainer.fit(self,
                          self.train_dataloader(),
                          self.val_dataloader())
@@ -183,8 +200,9 @@ class SegmentationModule(pl.LightningModule):
 if __name__ == "__main__":
     model_trainer = SegmentationModule(config_data=custom_parser_config,
                                        train_mode=True,
-                                       lr = 0.01,
+                                       lr=0.0003,
                                        batch_size=2,
-                                       epochs=150,
+                                       epochs=500,
                                        gpu=1)
     model_trainer.train_model()
+

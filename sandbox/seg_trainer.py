@@ -34,7 +34,7 @@ class SegmentationModule(pl.LightningModule):
                  epochs: int = 50, lr: float = 0.003) -> None:
         """
         :param config_data: Config for data, utils.
-        :param train_mode: Sets model to training or inference mode.
+        :param train_mode: Sets model to training or run_inference mode.
         :param batch_size: Batch size during training.
         :param epochs: Total epochs for training. (default 50)
         :param lr: Learning rate (default 0.003)

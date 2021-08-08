@@ -90,6 +90,7 @@ def draw_segmentation_map(image, masks, boxes, labels):
 
     return image
 
+
 def inference(input_img: torch.Tensor, model_path: str) -> torch.Tensor:
     seg_inference = SegmentationModule(config_data=custom_parser_config,
                                        train_mode=False,

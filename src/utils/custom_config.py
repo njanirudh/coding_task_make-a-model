@@ -10,7 +10,8 @@ custom_parser_config = {
             "val": [{"path": "/home/anirudh/NJ/Interview/Pheno-Inspect/"
                             "coding_task_make-a-model/dataset/sugarbeet_weed_dataset",
                      "sampling_weight": 1.0}],
-            "test": [{"path": "TODO/sugarbeet_weed_dataset",
+            "test": [{"path": "/home/anirudh/NJ/Interview/Pheno-Inspect/"
+                            "coding_task_make-a-model/dataset/sugarbeet_weed_dataset",
                       "sampling_weight": 1.0}],
         },
         "input_layers": [
@@ -18,18 +19,18 @@ custom_parser_config = {
                 "name": "rgb",
                 "channels": 3,
                 "mean": [0.485, 0.456, 0.406],  # input data normalization
-                "std": [0.229, 0.224, 0.225],
+                "std": [0.229, 0.224, 0.225],   # using imagenet values
             }
         ],
         "instance_filter": {"min_box_area": 100, "min_mask_area": 100},
-        "model_input": {"height": 448, "width": 448},  # TODO adjust as required
+        "model_input": {"height": 224, "width": 224},  # TODO adjust as required
         "model_output": {
-            "height": 448,  # TODO adjust as required
+            "height": 224,  # TODO adjust as required
             "offset_x": 0,
             "offset_y": 0,
             "stride_x": 1,
             "stride_y": 1,
-            "width": 448,
+            "width": 224,
         },
         "required_targets": {
             "area": True,
