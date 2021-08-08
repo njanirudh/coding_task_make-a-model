@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # Malisiewicz et al.
 def non_max_suppression_fast(boxes: np.array, overlapThresh: float = 0.5) -> np.array:
     # if there are no boxes, return an empty list

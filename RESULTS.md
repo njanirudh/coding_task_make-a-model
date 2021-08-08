@@ -1,7 +1,20 @@
+### Plant/Weed Segmentation
 
+
+#### Design Choices
+
+
+#### Code
+
+
+#### Results
+
+
+#### Extra Ideas
 
 
 #### References
+
 1. https://github.com/ternaus/cloths_segmentation
 2. https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
 1. https://pytorch.org/vision/master/auto_examples/plot_visualization_utils.html

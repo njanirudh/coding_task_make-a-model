@@ -66,14 +66,14 @@ class PiMap:
 
         for tile_grid_data in self._meta["tileGrids"]:
             if tile_grid_data["scaleDenominator"] <= scale_denominator and (
-                coarsest is None
-                or tile_grid_data["scaleDenominator"] > coarsest["scaleDenominator"]
+                    coarsest is None
+                    or tile_grid_data["scaleDenominator"] > coarsest["scaleDenominator"]
             ):
                 coarsest = tile_grid_data
 
             if (
-                smallest is None
-                or tile_grid_data["scaleDenominator"] < smallest["scaleDenominator"]
+                    smallest is None
+                    or tile_grid_data["scaleDenominator"] < smallest["scaleDenominator"]
             ):
                 smallest = tile_grid_data
 
@@ -86,13 +86,13 @@ class PiMap:
         raise ValueError(f"No tile grids exist for this map: {self._path}")
 
     def provide_raster(
-        self,
-        raster_layer_name: str,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        scale_denominator: int = 1,
+            self,
+            raster_layer_name: str,
+            x: int,
+            y: int,
+            width: int,
+            height: int,
+            scale_denominator: int = 1,
     ):
         if scale_denominator != 1:
             raise ValueError("A scale denominator different from 1 is not supported.")
@@ -150,8 +150,8 @@ class PiMap:
             raster_upper = (tile_y - raster_min_tile_y) * tile_height
 
             raster[
-                raster_upper : raster_upper + tile_height,
-                raster_left : raster_left + tile_width,
+            raster_upper: raster_upper + tile_height,
+            raster_left: raster_left + tile_width,
             ] = self._read_tile(
                 raster_layer_name=raster_layer_name,
                 tile_x=tile_x,
@@ -168,9 +168,9 @@ class PiMap:
         tiles_upper = tile_height * raster_min_tile_y
 
         raster = raster[
-            y - tiles_upper : y + height - tiles_upper,
-            x - tiles_left : x + width - tiles_left,
-        ]
+                 y - tiles_upper: y + height - tiles_upper,
+                 x - tiles_left: x + width - tiles_left,
+                 ]
 
         if raster.shape[0] != height or raster.shape[1] != width:
             raise RuntimeError(
@@ -180,16 +180,16 @@ class PiMap:
         return raster
 
     def _read_tile(
-        self,
-        raster_layer_name: str,
-        tile_x: int,
-        tile_y: int,
-        tile_width: int,
-        tile_height: int,
-        scale_denominator: int,
-        num_channels: int,
-        dtype: str,
-        file_format: str,
+            self,
+            raster_layer_name: str,
+            tile_x: int,
+            tile_y: int,
+            tile_width: int,
+            tile_height: int,
+            scale_denominator: int,
+            num_channels: int,
+            dtype: str,
+            file_format: str,
     ) -> np.ndarray:
 
         tile_path = self._tile_path(
@@ -214,7 +214,7 @@ class PiMap:
             raise ValueError(f"Single channel raster expected: '{tile_path}'")
 
         if num_channels != 1 and (
-            len(raster.shape) != 3 or raster.shape[2] != num_channels
+                len(raster.shape) != 3 or raster.shape[2] != num_channels
         ):
             raise ValueError(
                 f"{num_channels} channels raster expected: '{tile_path}' Got: {raster.shape}"
@@ -223,13 +223,13 @@ class PiMap:
         return raster
 
     def query_intersection(
-        self,
-        vector_layer_name: str,
-        x: float,
-        y: float,
-        width: float,
-        height: float,
-        resolve_objects: bool = False,
+            self,
+            vector_layer_name: str,
+            x: float,
+            y: float,
+            width: float,
+            height: float,
+            resolve_objects: bool = False,
     ):
         if vector_layer_name not in self._meta["vectorLayers"]:
             raise ValueError("Vector layer '{vector_layer_name}' does not exist.")
@@ -271,19 +271,19 @@ class PiMap:
         return vector_object_data
 
     def _tile_path(
-        self,
-        raster_layer_name: str,
-        tile_x: int,
-        tile_y: int,
-        scale_denominator: int,
-        file_format: str,
+            self,
+            raster_layer_name: str,
+            tile_x: int,
+            tile_y: int,
+            scale_denominator: int,
+            file_format: str,
     ) -> pathlib.Path:
         return (
-            self._path
-            / "tileLayers"
-            / raster_layer_name
-            / "tiles"
-            / f"{tile_x}-{tile_y}-{scale_denominator}{file_format}"
+                self._path
+                / "tileLayers"
+                / raster_layer_name
+                / "tiles"
+                / f"{tile_x}-{tile_y}-{scale_denominator}{file_format}"
         )
 
     def _load_spatial_indices(self) -> typing.Dict[str, rtree.index.Rtree]:
@@ -295,7 +295,7 @@ class PiMap:
         }
 
     def _create_spatial_index(
-        self, vector_layer_name: str, from_existing: bool
+            self, vector_layer_name: str, from_existing: bool
     ) -> rtree.index.Rtree:
         spatial_index_path = self._spatial_index_path(
             vector_layer_name=vector_layer_name
@@ -319,25 +319,26 @@ class PiMap:
 
         return rtree.index.Rtree(
             str(spatial_index_path),
-            interleaved=False,  # if False coordinate order in spatial index is left/min_x, right/max_x, upper/min_y, lower/max_y
+            interleaved=False,
+            # if False coordinate order in spatial index is left/min_x, right/max_x, upper/min_y, lower/max_y
         )
 
     def _spatial_index_path(self, vector_layer_name: str) -> pathlib.Path:
         return self._path / "vectorLayers" / vector_layer_name / "spatialIndex/rtree"
 
     def _vector_object_path(
-        self, vector_layer_name: str, vector_object_id: str
+            self, vector_layer_name: str, vector_object_id: str
     ) -> pathlib.Path:
         return (
-            self._path
-            / f"vectorLayers"
-            / vector_layer_name
-            / "objects"
-            / f"{vector_object_id}.json"
+                self._path
+                / f"vectorLayers"
+                / vector_layer_name
+                / "objects"
+                / f"{vector_object_id}.json"
         )
 
     def _tile_indices(
-        self, tile_grid_data: typing.Dict
+            self, tile_grid_data: typing.Dict
     ) -> typing.Generator[typing.Tuple[int, int, int, int, int], None, None]:
         tile_width = tile_grid_data["tileWidth"]
         tile_height = tile_grid_data["tileHeight"]
@@ -347,7 +348,7 @@ class PiMap:
         max_tile_y = math.ceil(self.height / tile_height) - 1
 
         for tile_x, tile_y in itertools.product(
-            range(max_tile_x + 1),
-            range(max_tile_y + 1),
+                range(max_tile_x + 1),
+                range(max_tile_y + 1),
         ):
             yield tile_x, tile_y, tile_width, tile_height, scale_denominator

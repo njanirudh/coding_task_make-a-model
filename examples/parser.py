@@ -4,15 +4,11 @@
 
 from __future__ import annotations
 
-import pathlib
-
-import numpy as np
 import cv2
 
-from src.piutils.piutils import pi_log
-from src.piutils.piutils import pi_io
-from src.piutils.piutils import pi_drawing
 from src.pidata.pidata import pi_parser
+from src.piutils.piutils import pi_drawing
+from src.piutils.piutils import pi_log
 
 logger = pi_log.get_logger(__name__)
 
@@ -180,14 +176,16 @@ if __name__ == "__main__":
         config=parser_config,
         split_name="train",
         num_samples=100,  # number of samples to be drawn, set to a multiple of teh batch size
-        numpy_to_tensor_func=None,  # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
+        numpy_to_tensor_func=None,
+        # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
     )
 
     drawing_kwargs = dict(
         mean=train_data_parser.mean,  # undo input normalization
         std=train_data_parser.std,
         semantic_labels=train_data_parser.semantic_labels,
-        output_width=train_data_parser.output_width,  # position of network output wrt to input, see pidata.pi_parser.__init__()
+        output_width=train_data_parser.output_width,
+        # position of network output wrt to input, see pidata.pi_parser.__init__()
         output_height=train_data_parser.output_height,
         output_offset_x=train_data_parser.output_offset_x,
         output_offset_y=train_data_parser.output_offset_y,
@@ -199,7 +197,7 @@ if __name__ == "__main__":
     for sample_index, (input_tensor, target_dict) in enumerate(train_data_parser):
         if sample_index != 15:
             continue
-        logger.info(f"Sample {sample_index+1}/{len(train_data_parser)}.")
+        logger.info(f"Sample {sample_index + 1}/{len(train_data_parser)}.")
         logger.info(f"    Input shape: {input_tensor.shape}")
         logger.info(f"    Sampled image IDs: {target_dict['image_id']}")
 
@@ -230,9 +228,9 @@ if __name__ == "__main__":
             )
 
         if (
-            "boxes" in target_dict
-            or "keypoints" in target_dict
-            or "masks" in target_dict
+                "boxes" in target_dict
+                or "keypoints" in target_dict
+                or "masks" in target_dict
         ) and "labels" in target_dict:
             drawing_instances = (
                 pi_drawing.draw_instances(  # feel free to use in your own code

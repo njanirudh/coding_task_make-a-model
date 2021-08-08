@@ -1,22 +1,14 @@
-
-import torch
-import numpy as np
 import pytorch_lightning as pl
-from torch.nn import CrossEntropyLoss
-from torch.nn.functional import log_softmax
-from torch.utils.data import DataLoader
-import segmentation_models_pytorch as smp
-from pytorch_lightning.loggers import TensorBoardLogger
-
+import torch
 import torchvision
+from torch.nn import CrossEntropyLoss
+from torch.utils.data import DataLoader
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from src.model.unet import UNET
-from utils.checkpoint_utils import PeriodicCheckpoint
-
 from src.pidata.pidata import pi_parser
 from src.utils.custom_config import custom_parser_config
+from utils.checkpoint_utils import PeriodicCheckpoint
 
 # Setting seed for reproducibility
 seed = 666
@@ -147,8 +139,8 @@ class SegmentationModule(pl.LightningModule):
                                        batch_size=self.batch_size,
                                        shuffle=True,
                                        num_workers=4,
-                                       collate_fn=self.collate_fn
-                                      )
+                                       collate_fn=self.collate_fn  # custom collate
+                                       )
         self.num_train_imgs = len(self.train_loader)
         return self.train_loader
 
@@ -165,7 +157,7 @@ class SegmentationModule(pl.LightningModule):
                                      batch_size=self.batch_size,
                                      shuffle=True,
                                      num_workers=4,
-                                     collate_fn=self.collate_fn
+                                     collate_fn=self.collate_fn  # custom collate
                                      )
         self.num_val_imgs = len(self.val_loader)
         return self.val_loader
@@ -200,9 +192,8 @@ class SegmentationModule(pl.LightningModule):
 if __name__ == "__main__":
     model_trainer = SegmentationModule(config_data=custom_parser_config,
                                        train_mode=True,
-                                       lr=0.0003,
+                                       lr=0.0001,
                                        batch_size=2,
                                        epochs=500,
                                        gpu=1)
     model_trainer.train_model()
-

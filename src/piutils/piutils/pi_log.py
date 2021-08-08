@@ -8,8 +8,8 @@ import logging
 
 
 def get_logger(
-    name: str,
-    logging_format: str = "[%(levelname)s %(name)s %(filename)s:%(funcName)s:%(lineno)d] %(message)s",
+        name: str,
+        logging_format: str = "[%(levelname)s %(name)s %(filename)s:%(funcName)s:%(lineno)d] %(message)s",
 ) -> logging.Logger:
     """Get a logger instance to be used in other modules.
 

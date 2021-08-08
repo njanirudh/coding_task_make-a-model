@@ -44,13 +44,13 @@ class PiParser:
     """
 
     def __init__(
-        self,
-        split_name: str,
-        num_samples: int,
-        config: typing.Dict,
-        numpy_to_tensor_func: typing.Optional[
-            typing.Callable[[np.ndarray], typing.Any]
-        ] = None,
+            self,
+            split_name: str,
+            num_samples: int,
+            config: typing.Dict,
+            numpy_to_tensor_func: typing.Optional[
+                typing.Callable[[np.ndarray], typing.Any]
+            ] = None,
     ):
         """
         Args:
@@ -242,8 +242,8 @@ class PiParser:
 
         logger.info(f"Remap semantic labels '{self._split_name}':")
         for (
-            semantic_label_name,
-            mapped_to_name,
+                semantic_label_name,
+                mapped_to_name,
         ) in self._semantic_labels_mapping.items():
             logger.info(f" * {semantic_label_name} \u2192 {mapped_to_name}")
 
@@ -342,10 +342,10 @@ class PiParser:
                     accept = True
 
                 if (
-                    sampler_data["type"] in ["instances"]
-                    and sampler_data["weight"] > 0.0
-                    and dataset
-                    in self._instances_sampling_index_data_per_dataset  # exclude if not instances to sample
+                        sampler_data["type"] in ["instances"]
+                        and sampler_data["weight"] > 0.0
+                        and dataset
+                        in self._instances_sampling_index_data_per_dataset  # exclude if not instances to sample
                 ):
                     accept = True
 
@@ -405,7 +405,7 @@ class PiParser:
             f"Using {len(self._datasets)} dataset(s) from split '{self._split_name}':"
         )
         for dataset, sampling_weight in zip(
-            self._datasets, self._datasets_sampling_weights
+                self._datasets, self._datasets_sampling_weights
         ):
             logger.info(f" * Name: {dataset.name}")
             logger.info(f"   Sampling weight (normalized): {sampling_weight}")
@@ -443,7 +443,7 @@ class PiParser:
             f"+ {len(self._color_transforms_data)} random transforms for data augmentation:"
         )
         for transform_data in (
-            self._geometry_transforms_data + self._color_transforms_data
+                self._geometry_transforms_data + self._color_transforms_data
         ):
             logger.info(f"    * Type: {transform_data['type']}")
 
@@ -749,13 +749,13 @@ class PiParser:
         # imap to output size of model
 
         imap = imap[
-            self._output_offset_y : (
-                self._output_offset_y + self._output_height
-            ) : self._output_stride_y,
-            self._output_offset_x : (
-                self._output_offset_x + self._output_width
-            ) : self._output_stride_x,
-        ]
+               self._output_offset_y: (
+                       self._output_offset_y + self._output_height
+               ): self._output_stride_y,
+               self._output_offset_x: (
+                       self._output_offset_x + self._output_width
+               ): self._output_stride_x,
+               ]
 
         target = self._make_target(
             imap=imap,
@@ -766,10 +766,10 @@ class PiParser:
         return self._numpy_to_tensor(input_raster), target
 
     def _make_target(
-        self,
-        imap: np.ndarray,
-        annotations: typing.Dict,
-        geometry_transforms: typing.List[pidata.pi_transform.PiRandomTransform],
+            self,
+            imap: np.ndarray,
+            annotations: typing.Dict,
+            geometry_transforms: typing.List[pidata.pi_transform.PiRandomTransform],
     ) -> typing.Dict[str, typing.Union[np.ndarray, typing.Any]]:
         imap_ids = np.unique(imap)
 
@@ -807,14 +807,14 @@ class PiParser:
 
         for annotation_object_id, annotation_object in annotations.items():
             if (
-                annotation_object["type"] in ["segment", "instance"]
-                and "imapIds" in annotation_object
-                and any(
-                    (
+                    annotation_object["type"] in ["segment", "instance"]
+                    and "imapIds" in annotation_object
+                    and any(
+                (
                         annotation_imap_id in imap_ids
                         for annotation_imap_id in annotation_object["imapIds"]
-                    )
                 )
+            )
             ):
                 annotation_mask = np.isin(imap, annotation_object["imapIds"])
 
@@ -851,14 +851,14 @@ class PiParser:
                     box_area = (box[2] - box[0]) * (box[3] - box[1])
 
                     if (
-                        "instance_filter" in self.config
-                        and box_area < self.config["instance_filter"]["min_box_area"]
+                            "instance_filter" in self.config
+                            and box_area < self.config["instance_filter"]["min_box_area"]
                     ):
                         continue
 
                     if "instance_filter" in self.config and (
-                        annotation_mask.sum()
-                        < self.config["instance_filter"]["min_mask_area"]
+                            annotation_mask.sum()
+                            < self.config["instance_filter"]["min_mask_area"]
                     ):
                         continue
 
@@ -879,28 +879,28 @@ class PiParser:
 
                     if self._config["required_targets"]["keypoints"]:
                         if (
-                            "keypoints" in annotation_object
-                            and annotation_object["keypoints"]
+                                "keypoints" in annotation_object
+                                and annotation_object["keypoints"]
                         ):
                             keypoint_position = (
-                                np.asarray(
-                                    annotation_object["keypoints"][0]["coordinates"],
-                                    dtype=np.float32,
-                                )
-                                - np.asarray(
-                                    [self._output_offset_x, self._output_offset_y],
-                                    dtype=np.float32,
-                                )
-                            ) / np.asarray(
+                                                        np.asarray(
+                                                            annotation_object["keypoints"][0]["coordinates"],
+                                                            dtype=np.float32,
+                                                        )
+                                                        - np.asarray(
+                                                    [self._output_offset_x, self._output_offset_y],
+                                                    dtype=np.float32,
+                                                )
+                                                ) / np.asarray(
                                 [self._output_stride_x, self._output_stride_y],
                                 dtype=np.float32,
                             )
 
                             keypoint_is_visible = (
-                                keypoint_position[0] >= 0
-                                and keypoint_position[0] < self._output_width
-                                and keypoint_position[1] >= 0.0
-                                and keypoint_position[1] < self._output_height
+                                    keypoint_position[0] >= 0
+                                    and keypoint_position[0] < self._output_width
+                                    and keypoint_position[1] >= 0.0
+                                    and keypoint_position[1] < self._output_height
                             )
                         else:
                             keypoint_is_visible = False
@@ -972,7 +972,7 @@ class PiParser:
         return self._size
 
     def __getitem__(
-        self, index: int
+            self, index: int
     ) -> typing.Tuple[np.ndarray, typing.Dict[str, np.ndarray]]:
         """
         Returns:
@@ -1046,7 +1046,7 @@ class PiParser:
             return numpy_array
 
     def _query_region_from_map(
-        self, dataset_item: CiDatasetItemType, x: int, y: int, width: int, height: int
+            self, dataset_item: CiDatasetItemType, x: int, y: int, width: int, height: int
     ) -> typing.Tuple[np.ndarray, np.ndarray, typing.Dict]:
         """
         Returns:
@@ -1074,8 +1074,8 @@ class PiParser:
             dataset_item.map.provide_raster(
                 raster_layer_name="imap", x=x, y=y, width=width, height=height
             )
-            .reshape(height, width)
-            .astype(np.uint16)
+                .reshape(height, width)
+                .astype(np.uint16)
         )
 
         annotations = dataset_item.map.query_intersection(
@@ -1163,5 +1163,3 @@ class PiParser:
         for input_layer_data in self._config["input_layers"]:
             std += input_layer_data["std"]
         return std
-
-

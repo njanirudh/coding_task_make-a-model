@@ -1,22 +1,16 @@
-import cv2
-import torch
-import numpy as np
 import random
 
-from src.utils.vizualize import display_instances
-from src.pidata.pidata import pi_parser
-from src.utils.custom_config import custom_parser_config
-from src.piutils.piutils import pi_drawing
+import cv2
+import numpy as np
+import torch
 
-from src.piutils.piutils import pi_log
-from src.piutils.piutils import pi_io
-from src.piutils.piutils import pi_drawing
 from src.pidata.pidata import pi_parser
+from src.piutils.piutils import pi_log
+from src.utils.custom_config import custom_parser_config
 
 logger = pi_log.get_logger(__name__)
 
 from seg_trainer import SegmentationModule
-
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -27,7 +21,6 @@ COLORS = np.random.uniform(0, 255, size=(10, 3))
 
 
 def get_outputs(image, threshold, label_list):
-
     model = SegmentationModule(config_data=custom_parser_config,
                                train_mode=False,
                                batch_size=5,
@@ -119,23 +112,22 @@ if __name__ == "__main__":
     )
 
     drawing_kwargs = dict(
-            mean=train_data_parser.mean,  # undo input normalization
-            std=train_data_parser.std,
-            semantic_labels=train_data_parser.semantic_labels,
-            output_width=train_data_parser.output_width,  # position of network output wrt to input, see pidata.pi_parser.__init__()
-            output_height=train_data_parser.output_height,
-            output_offset_x=train_data_parser.output_offset_x,
-            output_offset_y=train_data_parser.output_offset_y,
-            output_stride_x=train_data_parser.output_stride_x,
-            output_stride_y=train_data_parser.output_stride_y,
-            scale_factor=1.0,
-        )
-
+        mean=train_data_parser.mean,  # undo input normalization
+        std=train_data_parser.std,
+        semantic_labels=train_data_parser.semantic_labels,
+        output_width=train_data_parser.output_width,
+        # position of network output wrt to input, see pidata.pi_parser.__init__()
+        output_height=train_data_parser.output_height,
+        output_offset_x=train_data_parser.output_offset_x,
+        output_offset_y=train_data_parser.output_offset_y,
+        output_stride_x=train_data_parser.output_stride_x,
+        output_stride_y=train_data_parser.output_stride_y,
+        scale_factor=1.0,
+    )
 
     MODEL_CHKP_PATH = "/home/anirudh/NJ/Interview/Pheno-Inspect/git_proj/" \
-                          "coding_task_make-a-model/src/lightning_logs/version_1/" \
-                          "checkpoints/epoch=92-step=184.ckpt"
-
+                      "coding_task_make-a-model/src/lightning_logs/version_1/" \
+                      "checkpoints/epoch=92-step=184.ckpt"
 
     # Target Values :
     #       ['semantics', 'boxes', 'labels', 'area', 'iscrowd', 'masks', 'keypoints', 'image_id']

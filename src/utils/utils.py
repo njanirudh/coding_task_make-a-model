@@ -6,16 +6,13 @@ Licensed under the MIT License (see LICENSE for details)
 Written by Waleed Abdulla
 """
 
-import sys
-import os
-import math
-import random
 import numpy as np
 import scipy.misc
 import scipy.ndimage
 import skimage.color
 import skimage.io
 import torch
+
 
 ############################################################
 #  Bounding Boxes
@@ -82,6 +79,7 @@ def compute_overlaps(boxes1, boxes2):
         box2 = boxes2[i]
         overlaps[:, i] = compute_iou(box2, boxes1, area2[i], area1)
     return overlaps
+
 
 def box_refinement(box, gt_box):
     """Compute refinement needed to transform box to gt_box.
@@ -168,6 +166,7 @@ class Dataset(object):
         TODO: class map is not supported yet. When done, it should handle mapping
               classes from different datasets to the same class ID.
         """
+
         def clean_name(name):
             """Returns a shorter version of object names for cleaner display."""
             return ",".join(name.split(",")[:1])
@@ -436,5 +435,3 @@ def generate_pyramid_anchors(scales, ratios, feature_shapes, feature_strides,
         anchors.append(generate_anchors(scales[i], ratios, feature_shapes[i],
                                         feature_strides[i], anchor_stride))
     return np.concatenate(anchors, axis=0)
-
-

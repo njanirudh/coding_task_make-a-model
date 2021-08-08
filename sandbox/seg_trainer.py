@@ -1,10 +1,8 @@
 import numpy as np
 import pytorch_lightning as pl
-import segmentation_models_pytorch as smp
 import torch
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.nn import CrossEntropyLoss
-from torch.nn.functional import log_softmax
 from torch.utils.data import DataLoader
 
 logger = TensorBoardLogger("tb_logs", name="my_model")
@@ -127,7 +125,7 @@ class SegmentationModule(pl.LightningModule):
                                        shuffle=True,
                                        num_workers=4,
                                        collate_fn=self.collate_fn
-                                      )
+                                       )
         self.num_train_imgs = len(self.train_loader)
         return self.train_loader
 
@@ -157,7 +155,6 @@ class SegmentationModule(pl.LightningModule):
                          self.val_dataloader())
 
     def collate_fn(self, batch):
-
         input_data_list = []
         label_list = []
         for item in batch:

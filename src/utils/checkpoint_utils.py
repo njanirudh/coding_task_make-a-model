@@ -10,6 +10,7 @@ class PeriodicCheckpoint(ModelCheckpoint):
     """
     Callback to create checkpoint every 'n' steps.
     """
+
     def __init__(self, n: int):
         super().__init__()
         self.every = n

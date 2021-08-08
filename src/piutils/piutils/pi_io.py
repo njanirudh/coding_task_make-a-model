@@ -30,8 +30,8 @@ def write_yaml(data: typing.Dict, path: typing.Union[pathlib.Path, str]):
 
 
 def read_image(
-    path: pathlib.Path, dtype: typing.Optional[numpy.dtype] = None
-) -> numpy.ndarray:
+        path: pathlib.Path, dtype: typing.Optional[np.dtype] = None
+) -> np.ndarray:
     raster = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
 
     if raster is None:
@@ -42,7 +42,7 @@ def read_image(
     return raster
 
 
-def write_image(raster: numpy.ndarray, path: pathlib.Path, **kwargs) -> None:
+def write_image(raster: np.ndarray, path: pathlib.Path, **kwargs) -> None:
     if len(raster.shape) == 3 and raster.shape[2] == 3:
         raster = cv2.cvtColor(raster, cv2.COLOR_RGB2BGR)
     elif len(raster.shape) == 3 and raster.shape[2] == 4:
@@ -59,7 +59,7 @@ def read_binary(path: pathlib.Path) -> bytes:
         return binary_file.read()
 
 
-def decode_image(binary: bytes, dtype: typing.Optional[numpy.dtype] = None):
+def decode_image(binary: bytes, dtype: typing.Optional[np.dtype] = None):
     binary_array = np.fromstring(binary, dtype=np.uint8)
     raster = cv2.imdecode(binary_array, cv2.IMREAD_UNCHANGED)
 
@@ -71,7 +71,7 @@ def decode_image(binary: bytes, dtype: typing.Optional[numpy.dtype] = None):
     return raster
 
 
-def _convert_raster(raster: np.ndarray, dtype: typing.Optional[numpy.dtype] = None):
+def _convert_raster(raster: np.ndarray, dtype: typing.Optional[np.dtype] = None):
     if len(raster.shape) == 3 and raster.shape[2] == 3:
         raster = cv2.cvtColor(raster, cv2.COLOR_BGR2RGB)
     elif len(raster.shape) == 3 and raster.shape[2] == 4:

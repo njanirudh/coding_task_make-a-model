@@ -1,17 +1,15 @@
-import numpy as np
+import matplotlib
 import torch
 
 from src.pidata.pidata import pi_parser
 from src.utils.custom_config import custom_parser_config
-from src.piutils.piutils import pi_drawing
-
-import matplotlib
-import matplotlib.pyplot as plt
 
 matplotlib.use('TKAgg', warn=False, force=True)
 
+
 def collate_fn(self, batch):
     return tuple(zip(*batch))
+
 
 if __name__ == "__main__":
     dataset = pi_parser.PiParser(

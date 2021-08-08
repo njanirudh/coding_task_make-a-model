@@ -1,8 +1,7 @@
-import torch
-import numpy as np
-
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
 
 matplotlib.use('TKAgg', warn=False, force=True)
 
@@ -121,7 +120,6 @@ if __name__ == "__main__":
 
             plt.figure(200)
             plt.imshow(drawing_semantic_labels)
-
 
         # --------------------------------------------
         # ---------------Result Viz------------------

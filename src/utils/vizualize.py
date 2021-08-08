@@ -7,16 +7,15 @@ Licensed under the MIT License (see LICENSE for details)
 Written by Waleed Abdulla
 """
 
+import colorsys
+import itertools
 import os
 import random
-import itertools
-import colorsys
-import numpy as np
-from skimage.measure import find_contours
-import matplotlib.pyplot as plt
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+from skimage.measure import find_contours
 
 matplotlib.use('TKAgg', warn=False, force=True)
 
@@ -493,4 +492,3 @@ def plot_loss(loss, val_loss, save=True, log_dir=None):
     else:
         plt.show(block=False)
         plt.pause(0.1)
-

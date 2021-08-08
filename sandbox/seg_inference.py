@@ -1,20 +1,18 @@
 import cv2
-import torch
-import numpy as np
-
-from src.pidata.pidata import pi_parser
-from src.utils.custom_config import custom_parser_config
-from seg_trainer import SegmentationModule
-
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+
+from seg_trainer import SegmentationModule
+from src.utils.custom_config import custom_parser_config
 
 matplotlib.use('TKAgg', warn=False, force=True)
 
 if __name__ == "__main__":
-
-    input_img = cv2.imread("/home/anirudh/NJ/Interview/Pheno-Inspect/git_proj/coding_task_make-a-model/dataset/sugarbeet_weed_dataset/items/"
-                           "68653b6d-f406-442d-833e-31ffb43cf578/map/tileLayers/rgb/tiles/0-0-1.png")
+    input_img = cv2.imread(
+        "/home/anirudh/NJ/Interview/Pheno-Inspect/git_proj/coding_task_make-a-model/dataset/sugarbeet_weed_dataset/items/"
+        "68653b6d-f406-442d-833e-31ffb43cf578/map/tileLayers/rgb/tiles/0-0-1.png")
     input_img = input_img[np.newaxis, ...]
     input_img = np.swapaxes(input_img, 1, 3)
     input_img = torch.from_numpy(input_img).float()
@@ -42,4 +40,3 @@ if __name__ == "__main__":
         result = np.squeeze(output_seg)
         plt.imshow(result, cmap='Blues')
         plt.show()
-
