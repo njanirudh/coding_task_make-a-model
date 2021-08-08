@@ -19,10 +19,11 @@ def run_inference(input_img: torch.Tensor, model_path: str) -> torch.Tensor:
     """
     Runs inference on a single image or a batch of images.
     Args:
-        input_img:
-        model_path:
+        input_img: Input single/batch or RGB images [B,C,W,H]
+        model_path: Path to model checkpoint (*.ckpt)
 
-    Returns:
+    Returns: Results from Mask-RCNN
+            [{'boxes', 'labels', 'scores', 'masks'},...,B]
 
     """
     seg_inference = SegmentationModule.load_from_checkpoint(checkpoint_path=model_path,
@@ -42,6 +43,7 @@ def run_inference(input_img: torch.Tensor, model_path: str) -> torch.Tensor:
 
 if __name__ == "__main__":
 
+    # dataset test parser
     train_data_parser = pi_parser.PiParser(
         config=custom_parser_config,
         split_name="test",
@@ -87,10 +89,12 @@ if __name__ == "__main__":
         print("labels : ", result_dict['labels'].shape, type(result_dict['labels']))
         print("scores : ", result_dict['scores'].shape, type(result_dict['scores']))
         print("masks : ", result_dict['masks'].shape, type(result_dict['masks']))
-        #
+
+        # Use Non-maximum-suppression to remove extra bounding boxes
         nms_boxes = non_max_suppression_fast(np.array(result_dict['boxes']), 0.5)
         print("NMS Boxes : ", nms_boxes.shape)
 
+        # Create binary mask
         masks_thresh = result_dict['masks']
         masks_thresh[masks_thresh >= 0.5] = 1
         masks_thresh[masks_thresh < 0.5] = 0
@@ -101,7 +105,7 @@ if __name__ == "__main__":
             **drawing_kwargs
         )
 
-        plt.figure(100)
+        plt.figure("Input Image")
         plt.imshow(drawing_input)
 
         # --------------------------------------------
@@ -118,7 +122,7 @@ if __name__ == "__main__":
             print("Semantic Map : ", target_dict["semantics"].shape,
                   np.unique(target_dict["semantics"]))
 
-            plt.figure(200)
+            plt.figure("Semantic Map")
             plt.imshow(drawing_semantic_labels)
 
         # --------------------------------------------
@@ -132,17 +136,17 @@ if __name__ == "__main__":
             drawing_instances = (
                 pi_drawing.draw_instances(  # feel free to use in your own code
                     input_tensor=input_tensor,
-                    boxes=np.array(result_dict["boxes"])[:10] if "boxes" in result_dict else None,
+                    boxes=np.array(result_dict["boxes"]) if "boxes" in result_dict else None,
                     keypoints=(
-                        np.array(result_dict["keypoints"])[:10] if "keypoints" in result_dict else None
+                        np.array(result_dict["keypoints"]) if "keypoints" in result_dict else None
                     ),
-                    masks=np.array(result_dict["masks"])[:10] if "masks" in result_dict else None,
-                    labels=np.array(result_dict["labels"])[:10],
+                    masks=np.array(result_dict["masks"]) if "masks" in result_dict else None,
+                    labels=np.array(result_dict["labels"]),
                     **drawing_kwargs
                 )
             )
 
-            plt.figure(300)
+            plt.figure("Mask-RCNN Output")
             plt.imshow(drawing_instances)
 
         plt.show()

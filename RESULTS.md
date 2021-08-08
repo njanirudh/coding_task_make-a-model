@@ -1,18 +1,26 @@
 ### Plant/Weed Segmentation
+Goal of this project is to prototype and showcase a segmentation model on a custom plant/weed dataset.
 
-
+-------------------------
 #### Design Choices
+* Hello
+* Hello
+* Hello
+* Hello
 
-
+-------------------------
 #### Code
 
 
+-------------------------
 #### Results
 
 
+-------------------------
 #### Extra Ideas
 
 
+-------------------------
 #### References
 
 1. https://github.com/ternaus/cloths_segmentation

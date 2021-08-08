@@ -3,6 +3,7 @@ import random
 import cv2
 import numpy as np
 import torch
+from typing import List
 
 from src.pidata.pidata import pi_parser
 from src.piutils.piutils import pi_log
@@ -20,7 +21,7 @@ matplotlib.use('TKAgg', warn=False, force=True)
 COLORS = np.random.uniform(0, 255, size=(10, 3))
 
 
-def get_outputs(image, threshold, label_list):
+def get_outputs(image, threshold: 0.5, label_list: List):
     model = SegmentationModule(config_data=custom_parser_config,
                                train_mode=False,
                                batch_size=5,
