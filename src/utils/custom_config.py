@@ -17,8 +17,8 @@ custom_parser_config = {
             {
                 "name": "rgb",
                 "channels": 3,
-                "mean": [0.319, 0.3992, 0.4686],  # input data normalization
-                "std": [0.1768, 0.2009, 0.2138],
+                "mean": [0.485, 0.456, 0.406],  # input data normalization
+                "std": [0.229, 0.224, 0.225],
             }
         ],
         "instance_filter": {"min_box_area": 100, "min_mask_area": 100},
