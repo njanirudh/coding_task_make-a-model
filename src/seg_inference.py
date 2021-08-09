@@ -66,84 +66,78 @@ if __name__ == "__main__":
         scale_factor=1.0,
     )
 
-    MODEL_CHKP_PATH = "/home/anirudh/NJ/Interview/Pheno-Inspect/git_proj/coding_task_make-a-model/" \
-                      "src/lightning_logs/version_9/checkpoints/epoch=0-step=48.ckpt"
+    MODEL_CHKP_PATH = "../trained_model/epoch=0-step=98.ckpt"
 
     # Target Values :
     #       ['semantics', 'boxes', 'labels', 'area', 'iscrowd', 'masks', 'keypoints', 'image_id']
-    for sample_index, (input_tensor, target_dict) in enumerate(train_data_parser):
-        if sample_index != 1:
-            continue
-        (input_tensor, target_dict) = train_data_parser[50]
-        logger.debug(f"Input Shape : , {input_tensor.shape}")
-        # input_img = torch.from_numpy(np.array([train_data_parser[16][0], train_data_parser[17][0]]))
-        input_img = torch.unsqueeze(torch.from_numpy(input_tensor), 0)
-        # input_img = torch.ones((2, 3, 448, 448))
-        logger.debug(f"Input Shape Unsqueezed : , {input_img.shape}")
+    (input_tensor, target_dict) = train_data_parser[50]
+    logger.debug(f"Input Shape : , {input_tensor.shape}")
+    input_img = torch.unsqueeze(torch.from_numpy(input_tensor), 0)
+    logger.debug(f"Input Shape Unsqueezed : , {input_img.shape}")
 
-        # Model Output :
-        #       ['boxes', 'labels', 'scores', 'masks']
-        result_dict = run_inference(input_img, MODEL_CHKP_PATH)[0]
-        logger.debug(f"Result Dict : {type(result_dict)}, {result_dict.keys()}")
-        logger.debug(f"boxes :  {result_dict['boxes'].shape}, {type(result_dict['boxes'])}")
-        logger.debug(f"labels :  {result_dict['labels'].shape}, {type(result_dict['labels'])}")
-        logger.debug(f"scores :  {result_dict['scores'].shape}, {type(result_dict['scores'])}")
-        logger.debug(f"masks :  {result_dict['masks'].shape}, {type(result_dict['masks'])}")
+    # Model Output :
+    #       ['boxes', 'labels', 'scores', 'masks']
+    result_dict = run_inference(input_img, MODEL_CHKP_PATH)[0]
+    logger.debug(f"Result Dict : {type(result_dict)}, {result_dict.keys()}")
+    logger.debug(f"boxes :  {result_dict['boxes'].shape}, {type(result_dict['boxes'])}")
+    logger.debug(f"labels :  {result_dict['labels'].shape}, {type(result_dict['labels'])}")
+    logger.debug(f"scores :  {result_dict['scores'].shape}, {type(result_dict['scores'])}")
+    logger.debug(f"masks :  {result_dict['masks'].shape}, {type(result_dict['masks'])}")
 
-        # Use Non-maximum-suppression to remove extra bounding boxes
-        nms_boxes = non_max_suppression_fast(np.array(result_dict['boxes']), 0.5)
-        logger.debug(f"NMS Boxes : {nms_boxes.shape}")
+    # Use Non-maximum-suppression to remove extra bounding boxes
+    nms_boxes = non_max_suppression_fast(np.array(result_dict['boxes']), 0.5)
+    logger.debug(f"NMS Boxes : {nms_boxes.shape}")
 
-        drawing_input = pi_drawing.draw_input(
-            input_tensor=input_tensor,
-            **drawing_kwargs
+    drawing_input = pi_drawing.draw_input(
+        input_tensor=input_tensor,
+        **drawing_kwargs
+    )
+
+    plt.figure("Input Image")
+    plt.imshow(drawing_input)
+    # plt.imsave("input1.png", drawing_input)
+    # --------------------------------------------
+    # -------------Semantic Map------------------
+    # --------------------------------------------
+    if "semantics" in target_dict:
+        drawing_semantic_labels = (
+            pi_drawing.color_semantic_labels(  # feel free to use in you own code
+                semantics_tensor=target_dict["semantics"],
+                **drawing_kwargs
+            )
         )
 
-        plt.figure("Input Image")
-        plt.imshow(drawing_input)
-        plt.imsave("input1.png", drawing_input)
-        # --------------------------------------------
-        # -------------Semantic Map------------------
-        # --------------------------------------------
-        if "semantics" in target_dict:
-            drawing_semantic_labels = (
-                pi_drawing.color_semantic_labels(  # feel free to use in you own code
-                    semantics_tensor=target_dict["semantics"],
-                    **drawing_kwargs
-                )
+        logger.debug(f"Semantic Map : {target_dict['semantics'].shape}, "
+                     f"{np.unique(target_dict['semantics'])}")
+
+        plt.figure("Semantic Map")
+        plt.imshow(drawing_semantic_labels)
+        # plt.imsave("semantic1.png", drawing_semantic_labels)
+
+    # --------------------------------------------
+    # ---------------Result Viz------------------
+    # --------------------------------------------
+    if (
+            "boxes" in result_dict
+            or "keypoints" in result_dict
+            or "masks" in result_dict
+    ) and "labels" in result_dict:
+        drawing_instances = (
+            pi_drawing.draw_instances(  # feel free to use in your own code
+                input_tensor=input_tensor,
+                boxes=np.array(result_dict["boxes"]) if "boxes" in result_dict else None,
+                keypoints=(
+                    np.array(result_dict["keypoints"]) if "keypoints" in result_dict else None
+                ),
+                masks=np.array(result_dict["masks"]) if "masks" in result_dict else None,
+                labels=np.array(result_dict["labels"]),
+                **drawing_kwargs
             )
+        )
 
-            logger.debug(f"Semantic Map : {target_dict['semantics'].shape}, "
-                         f"{np.unique(target_dict['semantics'])}")
+        plt.figure("Mask-RCNN Output")
+        plt.imshow(drawing_instances)
+        # plt.imsave("output1.png", drawing_instances)
 
-            plt.figure("Semantic Map")
-            plt.imshow(drawing_semantic_labels)
-            plt.imsave("semantic1.png", drawing_semantic_labels)
+    plt.show()
 
-        # --------------------------------------------
-        # ---------------Result Viz------------------
-        # --------------------------------------------
-        if (
-                "boxes" in result_dict
-                or "keypoints" in result_dict
-                or "masks" in result_dict
-        ) and "labels" in result_dict:
-            drawing_instances = (
-                pi_drawing.draw_instances(  # feel free to use in your own code
-                    input_tensor=input_tensor,
-                    boxes=np.array(result_dict["boxes"]) if "boxes" in result_dict else None,
-                    keypoints=(
-                        np.array(result_dict["keypoints"]) if "keypoints" in result_dict else None
-                    ),
-                    masks=np.array(result_dict["masks"]) if "masks" in result_dict else None,
-                    labels=np.array(result_dict["labels"]),
-                    **drawing_kwargs
-                )
-            )
-
-            plt.figure("Mask-RCNN Output")
-            plt.imshow(drawing_instances)
-            plt.imsave("output1.png", drawing_instances)
-
-        plt.show()
-        break
