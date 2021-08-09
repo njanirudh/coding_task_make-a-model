@@ -47,7 +47,7 @@ if __name__ == "__main__":
     train_data_parser = pi_parser.PiParser(
         config=custom_parser_config,
         split_name="test",
-        num_samples=1500,  # number of samples to be drawn, set to a multiple of the batch size
+        num_samples=2000,  # number of samples to be drawn, set to a multiple of the batch size
         numpy_to_tensor_func=None,
         # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
     )
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     # Target Values :
     #       ['semantics', 'boxes', 'labels', 'area', 'iscrowd', 'masks', 'keypoints', 'image_id']
-    (input_tensor, target_dict) = train_data_parser[50]
+    (input_tensor, target_dict) = train_data_parser[666]
     logger.debug(f"Input Shape : , {input_tensor.shape}")
     input_img = torch.unsqueeze(torch.from_numpy(input_tensor), 0)
     logger.debug(f"Input Shape Unsqueezed : , {input_img.shape}")
@@ -88,6 +88,10 @@ if __name__ == "__main__":
     nms_boxes = non_max_suppression_fast(np.array(result_dict['boxes']), 0.5)
     logger.debug(f"NMS Boxes : {nms_boxes.shape}")
 
+    # Model masks threshold
+    result_dict['masks'][result_dict['masks'] <= 0.5] = 0
+    result_dict['masks'][result_dict['masks'] > 0.5] = 1
+
     drawing_input = pi_drawing.draw_input(
         input_tensor=input_tensor,
         **drawing_kwargs
@@ -95,7 +99,7 @@ if __name__ == "__main__":
 
     plt.figure("Input Image")
     plt.imshow(drawing_input)
-    # plt.imsave("input1.png", drawing_input)
+    plt.imsave("input1.png", drawing_input)
     # --------------------------------------------
     # -------------Semantic Map------------------
     # --------------------------------------------
@@ -112,7 +116,7 @@ if __name__ == "__main__":
 
         plt.figure("Semantic Map")
         plt.imshow(drawing_semantic_labels)
-        # plt.imsave("semantic1.png", drawing_semantic_labels)
+        plt.imsave("semantic1.png", drawing_semantic_labels)
 
     # --------------------------------------------
     # ---------------Result Viz------------------
@@ -125,7 +129,7 @@ if __name__ == "__main__":
         drawing_instances = (
             pi_drawing.draw_instances(  # feel free to use in your own code
                 input_tensor=input_tensor,
-                boxes=np.array(result_dict["boxes"]) if "boxes" in result_dict else None,
+                boxes=np.array(nms_boxes) if "boxes" in result_dict else None,
                 keypoints=(
                     np.array(result_dict["keypoints"]) if "keypoints" in result_dict else None
                 ),
@@ -137,6 +141,6 @@ if __name__ == "__main__":
 
         plt.figure("Mask-RCNN Output")
         plt.imshow(drawing_instances)
-        # plt.imsave("output1.png", drawing_instances)
+        plt.imsave("output1.png", drawing_instances)
 
     plt.show()

@@ -120,13 +120,13 @@ class SegmentationModule(pl.LightningModule):
     def val_dataloader(self):
         val_data_parser = pi_parser.PiParser(
             config=custom_parser_config,
-            split_name="train",
+            split_name="val",
             num_samples=self.samples,  # number of samples to be drawn, set to a multiple of the batch size
             numpy_to_tensor_func=torch.from_numpy,
             # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
         )
 
-        self.val_loader = DataLoader(val_data_parser[1000:2000],
+        self.val_loader = DataLoader(val_data_parser,
                                      batch_size=self.batch_size,
                                      shuffle=True,
                                      num_workers=4,
@@ -141,8 +141,8 @@ class SegmentationModule(pl.LightningModule):
                                   callbacks=self.periodic_chkp,
                                   weights_summary="full",
                                   # overfit_batches=2,
-                                  accumulate_grad_batches=2,
-                                  # check_val_every_n_epoch=10,
+                                  # accumulate_grad_batches=2,
+                                  check_val_every_n_epoch=10,
                                   stochastic_weight_avg=True
                                   )
         self.trainer.fit(self,
