@@ -17,7 +17,7 @@ class PiRandomTransform:
         raise NotImplementedError(f"{type(self)}.resample is not yet implemented.")
 
     def transform_raster(
-            self, raster: np.ndarray, interpolation: str, fill_value: int
+        self, raster: np.ndarray, interpolation: str, fill_value: int
     ) -> np.ndarray:
         """
         Args:
@@ -39,29 +39,29 @@ class PiRandomTransform:
 
 class PiRandomAffineTransform(PiRandomTransform):
     def __init__(
-            self,
-            input_width: int,
-            input_height: int,
-            output_width: int,
-            output_height: int,
-            flip_x_probability: float,
-            flip_y_probability: float,
-            rotation_max: float,
-            rotation_min: float,
-            scaling_x_max: float,
-            scaling_x_min: float,
-            scaling_y_max: float,
-            scaling_y_min: float,
-            shearing_x_max: float,
-            shearing_x_min: float,
-            shearing_y_max: float,
-            shearing_y_min: float,
-            translation_x_max: float,
-            translation_x_min: float,
-            translation_y_max: float,
-            translation_y_min: float,
-            probability: float,
-            **kwargs,
+        self,
+        input_width: int,
+        input_height: int,
+        output_width: int,
+        output_height: int,
+        flip_x_probability: float,
+        flip_y_probability: float,
+        rotation_max: float,
+        rotation_min: float,
+        scaling_x_max: float,
+        scaling_x_min: float,
+        scaling_y_max: float,
+        scaling_y_min: float,
+        shearing_x_max: float,
+        shearing_x_min: float,
+        shearing_y_max: float,
+        shearing_y_min: float,
+        translation_x_max: float,
+        translation_x_min: float,
+        translation_y_max: float,
+        translation_y_min: float,
+        probability: float,
+        **kwargs,
     ):
         super().__init__()
 
@@ -166,14 +166,14 @@ class PiRandomAffineTransform(PiRandomTransform):
         translation_3[1, 2] = 0.5 * self._output_height
 
         self._matrix = (
-                translation_3 @ translation_2 @ rotation @ scaling @ translation_1
+            translation_3 @ translation_2 @ rotation @ scaling @ translation_1
         )
 
     def transform_raster(
-            self,
-            raster: np.ndarray,
-            interpolation: str,
-            fill_value: typing.Union[int, float, np.ndarray],
+        self,
+        raster: np.ndarray,
+        interpolation: str,
+        fill_value: typing.Union[int, float, np.ndarray],
     ):
         if not self._apply:
             return raster
@@ -232,16 +232,16 @@ class PiRandomAffineTransform(PiRandomTransform):
 
 class PiRandomHsvTransform(PiRandomTransform):
     def __init__(
-            self,
-            hue_min: float,
-            hue_max: float,
-            saturation_min: float,
-            saturation_max: float,
-            value_min: float,
-            value_max: float,
-            probability: float,
-            channels: typing.List[int],
-            **kwargs,
+        self,
+        hue_min: float,
+        hue_max: float,
+        saturation_min: float,
+        saturation_max: float,
+        value_min: float,
+        value_max: float,
+        probability: float,
+        channels: typing.List[int],
+        **kwargs,
     ):
         super().__init__()
 
@@ -282,7 +282,7 @@ class PiRandomHsvTransform(PiRandomTransform):
         self._value = random.uniform(low=self._value_min, high=self._value_max)
 
     def transform_raster(
-            self, raster: np.ndarray, interpolation: str, fill_value: np.ndarray
+        self, raster: np.ndarray, interpolation: str, fill_value: np.ndarray
     ) -> np.ndarray:
         if not self._apply:
             return raster
@@ -323,12 +323,12 @@ class PiRandomHsvTransform(PiRandomTransform):
 
 class PiRandomContrastTransform(PiRandomTransform):
     def __init__(
-            self,
-            contrast_min: float,
-            contrast_max: float,
-            probability: float,
-            channels: typing.List[int],
-            **kwargs,
+        self,
+        contrast_min: float,
+        contrast_max: float,
+        probability: float,
+        channels: typing.List[int],
+        **kwargs,
     ):
         super().__init__()
 
@@ -353,7 +353,7 @@ class PiRandomContrastTransform(PiRandomTransform):
         self._contrast = random.uniform(low=self._contrast_min, high=self._contrast_max)
 
     def transform_raster(
-            self, raster: np.ndarray, interpolation: str, fill_value: np.ndarray
+        self, raster: np.ndarray, interpolation: str, fill_value: np.ndarray
     ) -> np.ndarray:
         if not self._apply:
             return raster
@@ -382,12 +382,12 @@ class PiRandomContrastTransform(PiRandomTransform):
 
 class PiRandomBlurTransform(PiRandomTransform):
     def __init__(
-            self,
-            blur_min: float,
-            blur_max: float,
-            probability: float,
-            channels: typing.List[int],
-            **kwargs,
+        self,
+        blur_min: float,
+        blur_max: float,
+        probability: float,
+        channels: typing.List[int],
+        **kwargs,
     ):
         super().__init__()
 
@@ -411,7 +411,7 @@ class PiRandomBlurTransform(PiRandomTransform):
         self._blur = random.uniform(low=self._blur_min, high=self._blur_max)
 
     def transform_raster(
-            self, raster: np.ndarray, interpolation: str, fill_value: np.ndarray
+        self, raster: np.ndarray, interpolation: str, fill_value: np.ndarray
     ) -> np.ndarray:
         if not self._apply:
             return raster

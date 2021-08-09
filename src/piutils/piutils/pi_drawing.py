@@ -122,25 +122,25 @@ def color_semantic_labels(
 
 
 def draw_instances(
-        input_tensor: np.ndarray,
-        mean: np.ndarray,
-        std: np.ndarray,
-        labels: np.ndarray,
-        semantic_labels: typing.Dict,
-        output_width: int,
-        output_height: int,
-        output_offset_x: int = 0,
-        output_offset_y: int = 0,
-        output_stride_x: int = 1,
-        output_stride_y: int = 1,
-        scale_factor: float = 1.0,
-        boxes: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
-        keypoints: typing.Optional[
-            typing.Union[np.ndarray, typing.List[np.ndarray]]
-        ] = None,
-        masks: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
-        scores: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
-        **kwargs,
+    input_tensor: np.ndarray,
+    mean: np.ndarray,
+    std: np.ndarray,
+    labels: np.ndarray,
+    semantic_labels: typing.Dict,
+    output_width: int,
+    output_height: int,
+    output_offset_x: int = 0,
+    output_offset_y: int = 0,
+    output_stride_x: int = 1,
+    output_stride_y: int = 1,
+    scale_factor: float = 1.0,
+    boxes: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
+    keypoints: typing.Optional[
+        typing.Union[np.ndarray, typing.List[np.ndarray]]
+    ] = None,
+    masks: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
+    scores: typing.Optional[typing.Union[np.ndarray, typing.List[np.ndarray]]] = None,
+    **kwargs,
 ) -> np.ndarray:
     """Make a human-viewable image of the parsed target for an instance segmentation or object detection network.
 
@@ -207,16 +207,16 @@ def draw_instances(
         if boxes is not None:
             boxes_slice = boxes[slice_index]
             boxes_slice = (
-                    boxes_slice
-                    * np.asarray(
-                [
-                    actual_scale_factor_x,
-                    actual_scale_factor_y,
-                    actual_scale_factor_x,
-                    actual_scale_factor_y,
-                ],
-                dtype=np.float32,
-            ).reshape(1, 4)
+                boxes_slice
+                * np.asarray(
+                    [
+                        actual_scale_factor_x,
+                        actual_scale_factor_y,
+                        actual_scale_factor_x,
+                        actual_scale_factor_y,
+                    ],
+                    dtype=np.float32,
+                ).reshape(1, 4)
             )
             boxes_slice_int = np.round(boxes_slice).astype(np.int)
 
@@ -229,6 +229,7 @@ def draw_instances(
                 [actual_scale_factor_x, actual_scale_factor_y, 1.0],
                 dtype=np.float32,
             ).reshape(1, 1, 3)
+
             )
             keypoints_slice_int = np.round(keypoints_slice).astype(np.int)
 
@@ -284,6 +285,7 @@ def draw_instances(
         if boxes is not None and keypoints is not None and labels is not None:
             for keypoint_int, box_int, label in zip(
                     keypoints_slice_int, boxes_slice_int, labels_slice
+
             ):
                 if not keypoint_int[0, 2].item():
                     # not visible
@@ -359,17 +361,18 @@ def draw_instances(
 
 
 def _make_list_of_input_drawings(
-        input_tensor: np.ndarray,
-        mean: np.ndarray,
-        std: np.ndarray,
-        output_width: int,
-        output_height: int,
-        output_offset_x: int,
-        output_offset_y: int,
-        output_stride_x: int,
-        output_stride_y: int,
-        scale_factor: float,
+    input_tensor: np.ndarray,
+    mean: np.ndarray,
+    std: np.ndarray,
+    output_width: int,
+    output_height: int,
+    output_offset_x: int,
+    output_offset_y: int,
+    output_stride_x: int,
+    output_stride_y: int,
+    scale_factor: float,
 ) -> typing.List[np.ndarray]:
+
     if len(input_tensor.shape) == 3:
         batch_size = 1
         input_tensor = input_tensor[np.newaxis]
@@ -391,15 +394,15 @@ def _make_list_of_input_drawings(
 
     drawings = (
         np.ascontiguousarray(255.0 * input_tensor[..., :3])
-            .clip(0.0, 255.0)
-            .astype(np.uint8)
+        .clip(0.0, 255.0)
+        .astype(np.uint8)
     )
 
     return [
         cv2.resize(
             drawing[
-            output_offset_y: (output_offset_y + output_height),
-            output_offset_x: (output_offset_x + output_width),
+                output_offset_y : (output_offset_y + output_height),
+                output_offset_x : (output_offset_x + output_width),
             ],
             (drawing_width, drawing_height),
             interpolation=cv2.INTER_NEAREST,

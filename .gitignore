@@ -1,9 +1,12 @@
+<<<<<<< HEAD
 # User
 dataset/
 src/lightning_logs
 .idea/
 trained_model
 
+=======
+>>>>>>> a9afb660848b26bb4cc27213d4157885ba9381e8
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
