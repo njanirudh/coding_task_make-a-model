@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     plt.figure("Input Image")
     plt.imshow(drawing_input)
-    plt.imsave("input1.png", drawing_input)
+    # plt.imsave("input1.png", drawing_input)
     # --------------------------------------------
     # -------------Semantic Map------------------
     # --------------------------------------------
@@ -116,10 +116,10 @@ if __name__ == "__main__":
 
         plt.figure("Semantic Map")
         plt.imshow(drawing_semantic_labels)
-        plt.imsave("semantic1.png", drawing_semantic_labels)
+        # plt.imsave("semantic1.png", drawing_semantic_labels)
 
     # --------------------------------------------
-    # ---------------Result Viz------------------
+    # --------------- Result Viz------------------
     # --------------------------------------------
     if (
             "boxes" in result_dict
@@ -141,6 +141,19 @@ if __name__ == "__main__":
 
         plt.figure("Mask-RCNN Output")
         plt.imshow(drawing_instances)
-        plt.imsave("output1.png", drawing_instances)
+        # plt.imsave("output1.png", drawing_instances)
+
+    # --------------------------------------------
+    # --------------- Evaluation -----------------
+    # --------------------------------------------
+    """
+    Due to time constrains the code for metrics are not 
+    integrated into the application. The general code for 
+    IOU can be found in 'src/utils/maskrcnn_utils.py'. 
+    
+    We can pass the 'Non-Max-Supression' calculated boxes
+    along with the target bounding boxes to calculate the 
+    relevant metrics. 
+    """
 
     plt.show()
