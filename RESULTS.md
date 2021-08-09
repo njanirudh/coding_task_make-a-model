@@ -23,13 +23,13 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
   
   pip3 install -r requirements.txt
   ```
-* To run __Training__ :
+* To run __Training__ with default config:
   ```
-  python3 seg_trainer.py
+  python3 src/seg_trainer.py
   ```
-* To run __Inference__ :
+* To run __Inference__ with default config:
   ```
-  python3 seg_inference.py
+  python3 src/seg_inference.py
   ```
 -------------------------
 
