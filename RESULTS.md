@@ -6,9 +6,31 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
 
 #### Running The Code
 
-
-
-
+* Download the dataset and place it in the dataset folder as shown below. 
+* Directory Structure
+  * dataset
+    * __sugarbeet_weed_dataset__  <-----( place the dataset folder here )
+  * examples
+  * src
+  * trained model
+* Create Python Virtual Env and install 'requirements.txt'
+  ```
+  cd coding_task
+  
+  python3 -m venv ./envs 
+  
+  source ~/envs/venv/bin/activate
+  
+  pip3 install -r requirements.txt
+  ```
+* To run __Training__ :
+  ```
+  python3 seg_trainer.py
+  ```
+* To run __Inference__ :
+  ```
+  python3 seg_inference.py
+  ```
 -------------------------
 
 #### Design Choices
