@@ -178,24 +178,14 @@ if __name__ == "__main__":
         config=parser_config,
         split_name="train",
         num_samples=100,  # number of samples to be drawn, set to a multiple of teh batch size
-<<<<<<< HEAD
-        numpy_to_tensor_func=None,
-        # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
-=======
         numpy_to_tensor_func=None,  # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
->>>>>>> a9afb660848b26bb4cc27213d4157885ba9381e8
     )
 
     drawing_kwargs = dict(
         mean=train_data_parser.mean,  # undo input normalization
         std=train_data_parser.std,
         semantic_labels=train_data_parser.semantic_labels,
-<<<<<<< HEAD
-        output_width=train_data_parser.output_width,
-        # position of network output wrt to input, see pidata.pi_parser.__init__()
-=======
         output_width=train_data_parser.output_width,  # position of network output wrt to input, see pidata.pi_parser.__init__()
->>>>>>> a9afb660848b26bb4cc27213d4157885ba9381e8
         output_height=train_data_parser.output_height,
         output_offset_x=train_data_parser.output_offset_x,
         output_offset_y=train_data_parser.output_offset_y,
@@ -205,14 +195,7 @@ if __name__ == "__main__":
     )
 
     for sample_index, (input_tensor, target_dict) in enumerate(train_data_parser):
-<<<<<<< HEAD
-        if sample_index != 15:
-            continue
-        logger.info(f"Sample {sample_index + 1}/{len(train_data_parser)}.")
-=======
-
         logger.info(f"Sample {sample_index+1}/{len(train_data_parser)}.")
->>>>>>> a9afb660848b26bb4cc27213d4157885ba9381e8
         logger.info(f"    Input shape: {input_tensor.shape}")
         logger.info(f"    Sampled image IDs: {target_dict['image_id']}")
 
@@ -243,15 +226,9 @@ if __name__ == "__main__":
             )
 
         if (
-<<<<<<< HEAD
-                "boxes" in target_dict
-                or "keypoints" in target_dict
-                or "masks" in target_dict
-=======
             "boxes" in target_dict
             or "keypoints" in target_dict
             or "masks" in target_dict
->>>>>>> a9afb660848b26bb4cc27213d4157885ba9381e8
         ) and "labels" in target_dict:
             drawing_instances = (
                 pi_drawing.draw_instances(  # feel free to use in your own code

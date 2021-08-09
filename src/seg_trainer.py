@@ -126,7 +126,7 @@ class SegmentationModule(pl.LightningModule):
             # framework-dependent, e.g. torch.from_numpy (PyTorch), if None, the returned type is numpy.ndarray
         )
 
-        self.val_loader = DataLoader(val_data_parser,
+        self.val_loader = DataLoader(val_data_parser[1000:2000],
                                      batch_size=self.batch_size,
                                      shuffle=True,
                                      num_workers=4,
