@@ -88,7 +88,6 @@ Here's another impression of the variety of the data:
 There is an existing parser for the dataset. For a usage example, see [here](examples/parser.py). The parser implements `__getitem__` and `__len__`, like PyTorch's [map-style dataset](https://pytorch.org/docs/stable/data.html#map-style-datasets) (but you are not required to use PyTorch).
 
 It's tested with Python 3.8.2. The following additional packages are needed (different versions should usually work as well):
->>>>>>> a9afb660848b26bb4cc27213d4157885ba9381e8
 
 ```
 Numpy 1.20.3
