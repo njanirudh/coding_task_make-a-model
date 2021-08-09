@@ -18,13 +18,12 @@ if __name__ == "__main__":
         "datasets": {
             "train": [
                 {
-                    "path": "/home/anirudh/NJ/Interview/Pheno-Inspect/"
-                            "coding_task_make-a-model/dataset/sugarbeet_weed_dataset",  # TODO adjust as required
+                    "path": "../dataset/sugarbeet_weed_dataset",  # TODO adjust as required
                     "sampling_weight": 1.0,
                 }
             ],
-            "val": [{"path": "TODO/sugarbeet_weed_dataset", "sampling_weight": 1.0}],
-            "test": [{"path": "TODO/sugarbeet_weed_dataset", "sampling_weight": 1.0}],
+            "val": [{"path": "../dataset/sugarbeet_weed_dataset", "sampling_weight": 1.0}],
+            "test": [{"path": "../dataset/sugarbeet_weed_dataset", "sampling_weight": 1.0}],
         },
         "input_layers": [
             {
