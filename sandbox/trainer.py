@@ -1,8 +1,8 @@
 import matplotlib
 import torch
+from src.utils.custom_config import custom_parser_config
 
 from src.pidata.pidata import pi_parser
-from src.utils.custom_config import custom_parser_config
 
 matplotlib.use('TKAgg', warn=False, force=True)
 

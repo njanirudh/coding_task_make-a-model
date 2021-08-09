@@ -3,9 +3,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from src.utils.custom_config import custom_parser_config
 
 from seg_trainer import SegmentationModule
-from src.utils.custom_config import custom_parser_config
 
 matplotlib.use('TKAgg', warn=False, force=True)
 

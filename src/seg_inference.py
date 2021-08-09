@@ -6,11 +6,11 @@ import torch
 matplotlib.use('TKAgg', warn=False, force=True)
 
 from seg_trainer import SegmentationModule
-from src.pidata.pidata import pi_parser
-from src.piutils.piutils import pi_drawing
-from src.piutils.piutils import pi_log
-from src.utils.custom_config import custom_parser_config
-from src.utils.non_max_suppression import non_max_suppression_fast
+from pidata.pidata import pi_parser
+from piutils.piutils import pi_drawing
+from piutils.piutils import pi_log
+from config.custom_config import custom_parser_config
+from utils.non_max_suppression import non_max_suppression_fast
 
 logger = pi_log.get_logger(__name__)
 
@@ -67,38 +67,32 @@ if __name__ == "__main__":
     )
 
     MODEL_CHKP_PATH = "/home/anirudh/NJ/Interview/Pheno-Inspect/git_proj/coding_task_make-a-model/" \
-                      "src/lightning_logs/version_9/checkpoints/epoch=0-step=98.ckpt"
+                      "src/lightning_logs/version_9/checkpoints/epoch=0-step=48.ckpt"
 
     # Target Values :
     #       ['semantics', 'boxes', 'labels', 'area', 'iscrowd', 'masks', 'keypoints', 'image_id']
     for sample_index, (input_tensor, target_dict) in enumerate(train_data_parser):
         if sample_index != 1:
             continue
-        (input_tensor, target_dict) = train_data_parser[1357]
-        print("Input Shape : ", input_tensor.shape)
+        (input_tensor, target_dict) = train_data_parser[50]
+        logger.debug(f"Input Shape : , {input_tensor.shape}")
         # input_img = torch.from_numpy(np.array([train_data_parser[16][0], train_data_parser[17][0]]))
         input_img = torch.unsqueeze(torch.from_numpy(input_tensor), 0)
         # input_img = torch.ones((2, 3, 448, 448))
-        print("Input Shape Unsqueezed : ", input_img.shape)
+        logger.debug(f"Input Shape Unsqueezed : , {input_img.shape}")
 
         # Model Output :
         #       ['boxes', 'labels', 'scores', 'masks']
         result_dict = run_inference(input_img, MODEL_CHKP_PATH)[0]
-        print("Result Dict : ", type(result_dict), result_dict.keys())
-        print("boxes : ", result_dict['boxes'].shape, type(result_dict['boxes']))
-        print("labels : ", result_dict['labels'].shape, type(result_dict['labels']))
-        print("scores : ", result_dict['scores'].shape, type(result_dict['scores']))
-        print("masks : ", result_dict['masks'].shape, type(result_dict['masks']))
+        logger.debug(f"Result Dict : {type(result_dict)}, {result_dict.keys()}")
+        logger.debug(f"boxes :  {result_dict['boxes'].shape}, {type(result_dict['boxes'])}")
+        logger.debug(f"labels :  {result_dict['labels'].shape}, {type(result_dict['labels'])}")
+        logger.debug(f"scores :  {result_dict['scores'].shape}, {type(result_dict['scores'])}")
+        logger.debug(f"masks :  {result_dict['masks'].shape}, {type(result_dict['masks'])}")
 
         # Use Non-maximum-suppression to remove extra bounding boxes
         nms_boxes = non_max_suppression_fast(np.array(result_dict['boxes']), 0.5)
-        print("NMS Boxes : ", nms_boxes.shape)
-
-        # Create binary mask
-        masks_thresh = result_dict['masks']
-        masks_thresh[masks_thresh >= 0.5] = 1
-        masks_thresh[masks_thresh < 0.5] = 0
-        print(np.unique(masks_thresh))
+        logger.debug(f"NMS Boxes : {nms_boxes.shape}")
 
         drawing_input = pi_drawing.draw_input(
             input_tensor=input_tensor,
@@ -107,7 +101,7 @@ if __name__ == "__main__":
 
         plt.figure("Input Image")
         plt.imshow(drawing_input)
-
+        plt.imsave("input1.png", drawing_input)
         # --------------------------------------------
         # -------------Semantic Map------------------
         # --------------------------------------------
@@ -119,11 +113,12 @@ if __name__ == "__main__":
                 )
             )
 
-            print("Semantic Map : ", target_dict["semantics"].shape,
-                  np.unique(target_dict["semantics"]))
+            logger.debug(f"Semantic Map : {target_dict['semantics'].shape}, "
+                         f"{np.unique(target_dict['semantics'])}")
 
             plt.figure("Semantic Map")
             plt.imshow(drawing_semantic_labels)
+            plt.imsave("semantic1.png", drawing_semantic_labels)
 
         # --------------------------------------------
         # ---------------Result Viz------------------
@@ -148,6 +143,7 @@ if __name__ == "__main__":
 
             plt.figure("Mask-RCNN Output")
             plt.imshow(drawing_instances)
+            plt.imsave("output1.png", drawing_instances)
 
         plt.show()
         break

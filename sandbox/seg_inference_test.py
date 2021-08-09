@@ -1,13 +1,13 @@
 import random
+from typing import List
 
 import cv2
 import numpy as np
 import torch
-from typing import List
+from src.utils.custom_config import custom_parser_config
 
 from src.pidata.pidata import pi_parser
 from src.piutils.piutils import pi_log
-from src.utils.custom_config import custom_parser_config
 
 logger = pi_log.get_logger(__name__)
 

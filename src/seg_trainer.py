@@ -1,14 +1,16 @@
 import pytorch_lightning as pl
 import torch
-import torchvision
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from src.pidata.pidata import pi_parser
-from src.utils.custom_config import custom_parser_config
+from config.custom_config import custom_parser_config
+from model.MaskRCNN import get_model_instance_segmentation
+from pidata.pidata import pi_parser
+from piutils.piutils import pi_log
 from utils.checkpoint_utils import PeriodicCheckpoint
+
+logger = pi_log.get_logger(__name__)
+logger.propagate = False
 
 # Setting seed for reproducibility
 seed = 666
@@ -16,35 +18,6 @@ torch.manual_seed(seed)
 
 Tensor = torch.tensor
 Module = torch.nn.Module
-
-
-def get_model_instance_segmentation(num_classes: int):
-    """
-    Returns MaskRCNN model
-    Args:
-        num_classes: Total number of classes.
-
-    Returns: Mask-RCNN Model
-    """
-    # load an instance segmentation model pre-trained pre-trained on COCO and Imagenet.
-    model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True,
-                                                               pretrained_backbone=True,
-                                                               trainable_backbone_layers=0,
-                                                               )
-
-    # get number of input features for the classifier
-    in_features = model.roi_heads.box_predictor.cls_score.in_features
-    # replace the pre-trained head with a new one
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-
-    # now get the number of input features for the mask classifier
-    in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
-    hidden_layer = 256
-    # and replace the mask predictor with a new one
-    model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
-                                                       hidden_layer,
-                                                       num_classes)
-    return model
 
 
 class SegmentationModule(pl.LightningModule):
@@ -86,8 +59,8 @@ class SegmentationModule(pl.LightningModule):
         self.num_train_imgs, self.num_val_imgs = None, None
         self.trainer, self.curr_device = None, None
 
-        # Model checkpoint saving every 500 steps
-        self.periodic_chkp = PeriodicCheckpoint(1000)
+        # Model checkpoint saving every 10 steps
+        self.periodic_chkp = PeriodicCheckpoint(10)
         self.save_hyperparameters()
 
         self.config_data = config_data
@@ -107,7 +80,7 @@ class SegmentationModule(pl.LightningModule):
         inputs, labels = batch
 
         loss_dict = self.model(inputs, labels)
-        print("Training Loss :: ", len(loss_dict), loss_dict.keys())
+        print("Training Loss :: ", type(loss_dict), len(loss_dict))
         losses = sum(loss for loss in loss_dict.values())
 
         return losses
@@ -118,7 +91,7 @@ class SegmentationModule(pl.LightningModule):
         inputs, labels = batch
 
         loss_dict = self.model(inputs, labels)
-        print("Loss :: ", len(loss_dict), loss_dict.keys())
+        print("Loss :: ", type(loss_dict), len(loss_dict))
 
         return loss_dict
 
@@ -168,7 +141,7 @@ class SegmentationModule(pl.LightningModule):
                                   callbacks=self.periodic_chkp,
                                   weights_summary="full",
                                   # overfit_batches=2,
-                                  accumulate_grad_batches=5,
+                                  accumulate_grad_batches=2,
                                   # check_val_every_n_epoch=10,
                                   stochastic_weight_avg=True
                                   )
@@ -194,6 +167,6 @@ if __name__ == "__main__":
                                        train_mode=True,
                                        lr=0.0001,
                                        batch_size=2,
-                                       epochs=500,
+                                       epochs=10,
                                        gpu=1)
     model_trainer.train_model()

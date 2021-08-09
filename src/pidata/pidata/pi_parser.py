@@ -15,6 +15,7 @@ from . import pi_dataset
 from . import pi_transform
 
 logger = pi_log.get_logger(__name__)
+logger.propagate = False
 
 
 class PiParser:
