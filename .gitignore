@@ -2,6 +2,7 @@
 dataset/
 src/lightning_logs
 .idea/
+trained_model
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
