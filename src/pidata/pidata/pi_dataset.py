@@ -10,7 +10,7 @@ import typing
 
 import numpy as np
 
-from src.piutils.piutils import pi_io
+from piutils.piutils import pi_io
 from .pi_map import PiMap
 
 IMAP_BACKGORUND = 0

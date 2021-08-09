@@ -12,8 +12,8 @@ import typing
 import numpy as np
 import rtree
 
-from src.piutils.piutils import pi_io
-from src.piutils.piutils import pi_log
+from piutils.piutils import pi_io
+from piutils.piutils import pi_log
 
 logger = pi_log.get_logger(__name__)
 

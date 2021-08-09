@@ -10,7 +10,7 @@ import typing
 import cv2
 import numpy as np
 
-from src.piutils.piutils import pi_log
+from piutils.piutils import pi_log
 from . import pi_dataset
 from . import pi_transform
 

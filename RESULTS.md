@@ -4,6 +4,13 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
 
 -------------------------
 
+#### Running The Code
+
+
+
+
+-------------------------
+
 #### Design Choices
 
 * Pytorch along with Pytorch Lightning [1] is used for prototyping the model. Pytorch Lightning is used to scale the
@@ -16,6 +23,7 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
     * Custom UNet model : Custom UNet model written which outputs only segmentation mask but has no classification,
       regression head.
     * segmentation-models-pytorch [8]: Contains many pretrained segmentation models for simple training.
+* The evaluation metrics can be found using modified coco eval utilities [9].
 
 -------------------------
 
@@ -23,11 +31,10 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
 
 * 'src/seg_inference.py' has the main Inference and Visualization code.
 * 'src/seg_trainer.py' contains the Pytorch Lightning Module that can be used for training the segmentation model.
-* 'src/utils/*.py' contains all utilities functions required for training, inference and visualization loop.
+* 'src/utils/*.py' contains all utilities functions required for training, inference, evaluation and visualization loop.
 * 'src/config/custom_config.py' contains the modified config file used by us.
     * The image has been resized to (224,224) for easier prototyping and training.
     * The input is normalized according to Imagenet preprocessing values.
-* 'sandbox/*.py' contains only the prototype code and is not meant for production.
 * Along with the 3 classes in the dataset, an extra is added for considering the blank parts (due to rotation / skew
   transformations) of the images.
 
@@ -47,6 +54,7 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
   of the trained model.
 * Prototype end-end models trained only on our dataset or try other segmentation model architectures.
 * Proper metrics for testing quality of segmentation [7] can be used.
+* Frameworks like Detectron2 can be used to train the model and perform evaluation.  
 
 -------------------------
 
@@ -60,6 +68,8 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
 6. https://debuggercafe.com/instance-segmentation-with-pytorch-and-mask-r-cnn/
 7. https://www.jeremyjordan.me/evaluating-image-segmentation-models/
 8. https://segmentation-modelspytorch.readthedocs.io/en/latest/
+9. https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/cocoeval.py
+10. https://detectron2.readthedocs.io/en/latest/index.html
 
 -------------------------
 
