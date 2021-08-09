@@ -66,7 +66,7 @@ if __name__ == "__main__":
         scale_factor=1.0,
     )
 
-    MODEL_CHKP_PATH = "../trained_model/epoch=0-step=98.ckpt"
+    MODEL_CHKP_PATH = "../trained_model/model.ckpt"
 
     # Target Values :
     #       ['semantics', 'boxes', 'labels', 'area', 'iscrowd', 'masks', 'keypoints', 'image_id']
@@ -140,4 +140,3 @@ if __name__ == "__main__":
         # plt.imsave("output1.png", drawing_instances)
 
     plt.show()
-

@@ -6,13 +6,13 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
 
 #### Running The Code
 
-* Download the dataset and place it in the dataset folder as shown below. 
+* Download the dataset and place it in the dataset folder as shown below.
 * Directory Structure
-  * dataset
-    * __sugarbeet_weed_dataset__  <-----( place the dataset folder here )
-  * examples
-  * src
-  * trained model
+    * dataset
+        * __sugarbeet_weed_dataset__  <-----( place the dataset folder here )
+    * examples
+    * src
+    * trained model
 * Create Python Virtual Env and install 'requirements.txt'
   ```
   cd coding_task
@@ -31,6 +31,7 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
   ```
   python3 src/seg_inference.py
   ```
+
 -------------------------
 
 #### Design Choices
@@ -76,7 +77,7 @@ Goal of this project is to prototype and showcase a segmentation model on a cust
   of the trained model.
 * Prototype end-end models trained only on our dataset or try other segmentation model architectures.
 * Proper metrics for testing quality of segmentation [7] can be used.
-* Frameworks like Detectron2 can be used to train the model and perform evaluation.  
+* Frameworks like Detectron2 can be used to train the model and perform evaluation.
 
 -------------------------
 
